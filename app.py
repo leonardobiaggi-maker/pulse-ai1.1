@@ -9,136 +9,229 @@ from datetime import datetime
 # CONFIG PAGE
 # =========================
 st.set_page_config(
-    page_title="Pulse AI",
+    page_title="Pulse AI · Shopper",
     layout="wide",
-    page_icon="📦",
+    page_icon="https://shopper.com.br/static/img/og-logo.png",
     initial_sidebar_state="expanded"
 )
 
-# =========================
-# CSS CUSTOMIZADO
-# =========================
+# Shopper brand colors
+# Primary green : #00C25A
+# Dark green    : #009944
+# Background    : #0A0E17
+# Surface       : #111827
+# Border        : #1E2535
+# Text primary  : #F9FAFB
+# Text muted    : #6B7280
+
 st.markdown("""
 <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+    html, body, [class*="css"] {
+        font-family: 'Inter', sans-serif !important;
+    }
+
     /* Sidebar */
     [data-testid="stSidebar"] {
-        background-color: #0f1117;
+        background-color: #0A0E17 !important;
+        border-right: 1px solid #1E2535;
     }
     [data-testid="stSidebar"] * {
-        color: #fafafa !important;
+        color: #D1D5DB !important;
+    }
+    [data-testid="stSidebar"] .stRadio label {
+        font-size: 0.875rem !important;
+        padding: 6px 0 !important;
     }
 
-    /* Header principal */
+    /* Fundo geral */
+    .main .block-container {
+        background-color: #0A0E17;
+        padding-top: 1.5rem !important;
+    }
+
+    /* Header */
     .pulse-header {
-        background: linear-gradient(135deg, #1a1d2e 0%, #16213e 100%);
-        border-radius: 12px;
-        padding: 2rem 2.5rem;
+        background: #111827;
+        border-radius: 10px;
+        padding: 1.75rem 2rem;
         margin-bottom: 1.5rem;
-        border-left: 4px solid #E24B4A;
+        border-left: 3px solid #00C25A;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
     }
-    .pulse-header h1 {
-        color: #ffffff !important;
-        font-size: 2rem !important;
-        margin: 0 !important;
+    .pulse-header-left h1 {
+        color: #F9FAFB !important;
+        font-size: 1.5rem !important;
         font-weight: 700 !important;
+        margin: 0 !important;
+        letter-spacing: -0.02em;
     }
-    .pulse-header p {
-        color: #a0aec0 !important;
-        margin: 4px 0 0 0 !important;
-        font-size: 1rem !important;
+    .pulse-header-left p {
+        color: #6B7280 !important;
+        margin: 4px 0 0 !important;
+        font-size: 0.875rem !important;
     }
     .pulse-badge {
-        display: inline-block;
-        background: #E24B4A22;
-        color: #E24B4A;
-        border: 1px solid #E24B4A44;
-        border-radius: 20px;
-        padding: 2px 12px;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        background: #00C25A18;
+        color: #00C25A;
+        border: 1px solid #00C25A33;
+        border-radius: 6px;
+        padding: 5px 12px;
         font-size: 0.75rem;
         font-weight: 600;
-        margin-top: 8px;
-        letter-spacing: 0.05em;
+        letter-spacing: 0.04em;
+    }
+    .pulse-badge::before {
+        content: '';
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: #00C25A;
+        display: inline-block;
     }
 
-    /* Cards de KPI */
+    /* KPI cards */
     [data-testid="stMetric"] {
-        background: #1a1d2e;
-        border-radius: 10px;
-        padding: 1rem 1.25rem !important;
-        border: 1px solid #2d3148;
+        background: #111827 !important;
+        border-radius: 10px !important;
+        padding: 1.1rem 1.25rem !important;
+        border: 1px solid #1E2535 !important;
     }
-    [data-testid="stMetricLabel"] {
-        font-size: 0.8rem !important;
-        color: #a0aec0 !important;
+    [data-testid="stMetricLabel"] p {
+        font-size: 0.75rem !important;
+        color: #6B7280 !important;
+        font-weight: 500 !important;
+        text-transform: uppercase !important;
+        letter-spacing: 0.06em !important;
     }
     [data-testid="stMetricValue"] {
         font-size: 1.6rem !important;
-        color: #ffffff !important;
+        font-weight: 700 !important;
+        color: #F9FAFB !important;
+    }
+    [data-testid="stMetricDelta"] {
+        font-size: 0.75rem !important;
     }
 
-    /* Seção de agente */
+    /* Section titles */
+    h2, h3 {
+        color: #F9FAFB !important;
+        font-weight: 600 !important;
+        letter-spacing: -0.01em !important;
+    }
+
+    /* Divider */
+    hr { border-color: #1E2535 !important; margin: 1.5rem 0 !important; }
+
+    /* Selectbox */
+    .stSelectbox label p {
+        font-size: 0.8rem !important;
+        color: #6B7280 !important;
+        font-weight: 500 !important;
+        text-transform: uppercase !important;
+        letter-spacing: 0.05em !important;
+    }
+
+    /* Dataframe */
+    .stDataFrame { border-radius: 8px; overflow: hidden; border: 1px solid #1E2535; }
+
+    /* Container border */
+    [data-testid="stVerticalBlockBorderWrapper"] {
+        border-color: #1E2535 !important;
+        border-radius: 10px !important;
+        background: #111827 !important;
+    }
+
+    /* Agent steps */
     .agent-step {
-        background: #1a1d2e;
-        border-radius: 10px;
-        padding: 1.2rem 1.5rem;
-        margin-bottom: 10px;
-        border-left: 3px solid #378ADD;
+        background: #111827;
+        border-radius: 8px;
+        padding: 1rem 1.25rem;
+        margin-bottom: 8px;
+        border-left: 2px solid #00C25A;
         display: flex;
         align-items: flex-start;
         gap: 1rem;
     }
     .agent-step-num {
-        background: #378ADD;
-        color: white;
+        background: #00C25A;
+        color: #0A0E17;
         border-radius: 50%;
-        width: 28px;
-        height: 28px;
+        width: 26px;
+        height: 26px;
         display: flex;
         align-items: center;
         justify-content: center;
-        font-size: 0.85rem;
+        font-size: 0.8rem;
         font-weight: 700;
         flex-shrink: 0;
+        margin-top: 1px;
     }
     .agent-step-content h4 {
-        margin: 0 0 4px 0;
-        color: #ffffff;
-        font-size: 0.95rem;
+        margin: 0 0 3px 0;
+        color: #F9FAFB;
+        font-size: 0.9rem;
         font-weight: 600;
     }
     .agent-step-content p {
         margin: 0;
-        color: #a0aec0;
-        font-size: 0.85rem;
-        line-height: 1.5;
+        color: #6B7280;
+        font-size: 0.825rem;
+        line-height: 1.55;
     }
 
-    /* Impacto cards */
+    /* Impact cards */
     .impact-card {
-        background: #1a1d2e;
-        border-radius: 10px;
-        padding: 1.2rem;
+        background: #111827;
+        border-radius: 8px;
+        padding: 1.25rem;
         text-align: center;
-        border: 1px solid #2d3148;
+        border: 1px solid #1E2535;
     }
     .impact-card .value {
-        font-size: 1.8rem;
+        font-size: 1.75rem;
         font-weight: 700;
-        color: #E24B4A;
+        color: #00C25A;
         display: block;
+        letter-spacing: -0.02em;
     }
     .impact-card .label {
-        font-size: 0.8rem;
-        color: #a0aec0;
-        margin-top: 4px;
+        font-size: 0.775rem;
+        color: #6B7280;
+        margin-top: 5px;
         display: block;
+        font-weight: 500;
     }
 
-    /* Ajustes gerais */
-    .stDataFrame { border-radius: 8px; overflow: hidden; }
-    h1, h2, h3 { font-weight: 600 !important; }
-    .stSelectbox label { font-size: 0.85rem !important; color: #a0aec0 !important; }
-    div[data-testid="stHorizontalBlock"] { gap: 12px; }
+    /* Agent status cards */
+    .status-card {
+        background: #111827;
+        border-radius: 8px;
+        padding: 1rem 1.25rem;
+        border: 1px solid #1E2535;
+    }
+    .status-card .label {
+        color: #6B7280;
+        font-size: 0.75rem;
+        font-weight: 500;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        margin: 0;
+    }
+    .status-card .value {
+        color: #F9FAFB;
+        font-size: 0.95rem;
+        font-weight: 600;
+        margin: 4px 0 0;
+    }
+    .status-card.active .label { color: #00C25A; }
+    .status-card.active .value { color: #00C25A; }
 </style>
 """, unsafe_allow_html=True)
 
@@ -201,25 +294,28 @@ disp_col = next((c for c in substituicoes.columns if "disp"      in c.lower()), 
 # SIDEBAR — NAVEGAÇÃO
 # =========================
 with st.sidebar:
-    st.markdown("## 📦 Pulse AI")
-    st.markdown("*Agente de Prevenção de Ruptura*")
+    st.markdown(
+        "<p style='font-size:1.1rem;font-weight:700;color:#F9FAFB;margin:0;letter-spacing:-0.01em;'>Pulse AI</p>"
+        "<p style='font-size:0.78rem;color:#6B7280;margin:2px 0 0;'>Shopper · Prevenção de Ruptura</p>",
+        unsafe_allow_html=True
+    )
     st.markdown("---")
     pagina = st.radio(
         "Navegar para",
         [
-            "🏠  Visão geral",
-            "🚨  Radar de ruptura",
-            "📍  Matriz de risco",
-            "🧠  Substituições",
-            "💬  Alertas Slack",
-            "⚙️  Como o agente funciona",
-            "🤖  Executar agente",
+            "Visão geral",
+            "Radar de ruptura",
+            "Matriz de risco",
+            "Substituições",
+            "Alertas Slack",
+            "Como o agente funciona",
+            "Executar agente",
         ],
         label_visibility="collapsed"
     )
     st.markdown("---")
     st.markdown(
-        "<small style='color:#666'>Dados atualizados a cada 5 min<br>Fonte: Pulse_AI_Base.xlsx</small>",
+        "<small style='color:#374151;font-size:0.75rem;'>Atualizado a cada 5 min<br>Fonte: Pulse_AI_Base.xlsx</small>",
         unsafe_allow_html=True
     )
 
@@ -234,30 +330,32 @@ alertas_ativos = len(alertas)
 
 st.markdown(f"""
 <div class="pulse-header">
-    <h1>📦 Pulse AI</h1>
-    <p>Agente Inteligente de Prevenção de Ruptura</p>
-    <span class="pulse-badge">⚡ AGENTE ATIVO</span>
+    <div class="pulse-header-left">
+        <h1>Pulse AI</h1>
+        <p>Agente Inteligente de Prevenção de Ruptura · Shopper</p>
+    </div>
+    <span class="pulse-badge">AGENTE ATIVO</span>
 </div>
 """, unsafe_allow_html=True)
 
 # =========================
 # VISÃO GERAL
 # =========================
-if "Visão geral" in pagina or "Visão" in pagina:
+if pagina == "Visão geral":
 
     col1, col2, col3, col4, col5 = st.columns(5)
-    col1.metric("🔴 Produtos em risco",   em_risco)
-    col2.metric("💰 Impacto estimado",    f"R$ {impacto_total:,.0f}".replace(",", "."))
+    col1.metric("Produtos em risco",   em_risco)
+    col2.metric("Impacto estimado",    f"R$ {impacto_total:,.0f}".replace(",", "."))
     col3.metric(
-        "📅 Cobertura média", f"{dias_medio}d",
+        "Cobertura média", f"{dias_medio}d",
         delta=f"{round(dias_medio - 10, 1)}d vs meta",
         delta_color="normal" if dias_medio >= 10 else "inverse"
     )
-    col4.metric("🔁 Pedidos recorrentes", pedidos_total)
-    col5.metric("💬 Alertas ativos",      alertas_ativos)
+    col4.metric("Pedidos recorrentes", pedidos_total)
+    col5.metric("Alertas ativos",      alertas_ativos)
 
     st.markdown("---")
-    st.subheader("📊 Impacto financeiro por loja")
+    st.subheader("Impacto financeiro por loja")
 
     impacto_loja = (
         produtos.groupby("loja")["impacto_financeiro_estimado"]
@@ -278,7 +376,7 @@ if "Visão geral" in pagina or "Visão" in pagina:
     st.plotly_chart(fig_loja, use_container_width=True)
 
     st.markdown("---")
-    st.subheader("🔁 Demanda prevista")
+    st.subheader("Demanda prevista")
 
     recorrencia_group = (
         recorrencia.groupby("data_entrega_prevista")["quantidade_prevista"]
@@ -295,8 +393,8 @@ if "Visão geral" in pagina or "Visão" in pagina:
 # =========================
 # RADAR DE RUPTURA
 # =========================
-elif "Radar" in pagina:
-    st.subheader("🚨 Radar de Ruptura")
+elif pagina == "Radar de ruptura":
+    st.subheader("Radar de Ruptura")
 
     col_f1, _ = st.columns([2, 6])
     with col_f1:
@@ -350,9 +448,9 @@ elif "Radar" in pagina:
 # =========================
 # MATRIZ DE RISCO
 # =========================
-elif "Matriz" in pagina:
-    st.subheader("📍 Matriz de Risco")
-    st.caption("Cada bolha = um produto. Eixo X: cobertura restante. Eixo Y: impacto se romper. Tamanho: pedidos afetados.")
+elif pagina == "Matriz de risco":
+    st.subheader("Matriz de Risco")
+    st.caption("Cada bolha representa um produto. Eixo X: cobertura restante. Eixo Y: impacto financeiro. Tamanho: pedidos afetados.")
 
     fig_matrix = px.scatter(
         produtos,
@@ -378,8 +476,8 @@ elif "Matriz" in pagina:
 # =========================
 # SUBSTITUIÇÕES
 # =========================
-elif "Substitui" in pagina:
-    st.subheader("🧠 Substituição Inteligente")
+elif pagina == "Substituições":
+    st.subheader("Substituição Inteligente")
     st.caption("Score calculado com base em histórico de compras, sensibilidade à marca, faixa de preço e similaridade.")
 
     for _, row in substituicoes.iterrows():
@@ -411,8 +509,8 @@ elif "Substitui" in pagina:
 # =========================
 # ALERTAS SLACK
 # =========================
-elif "Alertas" in pagina:
-    st.subheader("💬 Central de Alertas Slack")
+elif pagina == "Alertas Slack":
+    st.subheader("Central de Alertas Slack")
     st.markdown("**Canal:** `#pulse-alertas`")
     st.markdown("")
 
@@ -448,8 +546,8 @@ elif "Alertas" in pagina:
 # =========================
 # COMO O AGENTE FUNCIONA
 # =========================
-elif "Como" in pagina:
-    st.subheader("⚙️ Como o Pulse AI funciona como agente")
+elif pagina == "Como o agente funciona":
+    st.subheader("Como o Pulse AI funciona como agente")
     st.markdown(
         "O Pulse AI não é um dashboard passivo — ele é um **agente autônomo** que monitora, "
         "decide e age sem precisar que ninguém abra o app."
@@ -512,38 +610,37 @@ elif "Como" in pagina:
 # =========================
 # EXECUTAR AGENTE (SIMULADOR)
 # =========================
-elif "Executar" in pagina or "🤖" in pagina:
+elif pagina == "Executar agente":
 
-    # Session state para histórico de execuções
     if "historico_ciclos" not in st.session_state:
         st.session_state.historico_ciclos = []
     if "ultimo_ciclo" not in st.session_state:
         st.session_state.ultimo_ciclo = None
 
-    st.subheader("🤖 Simulador de ciclo do agente")
+    st.subheader("Simulador de ciclo do agente")
 
     # Status do agente
     col_s1, col_s2, col_s3 = st.columns(3)
     with col_s1:
         st.markdown("""
-        <div style='background:#0f1117;border-radius:10px;padding:1rem;border:1px solid #1D9E7544;'>
-            <p style='color:#1D9E75;font-size:12px;margin:0;font-weight:600;'>● AGENTE ATIVO</p>
-            <p style='color:#fff;font-size:15px;margin:4px 0 0;font-weight:500;'>Monitoramento contínuo</p>
+        <div class='status-card active'>
+            <p class='label'>Status</p>
+            <p class='value'>Monitoramento contínuo</p>
         </div>""", unsafe_allow_html=True)
     with col_s2:
         ultimo = st.session_state.ultimo_ciclo
         texto_ultimo = ultimo.strftime("%H:%M:%S") if ultimo else "Nenhum ciclo executado"
         st.markdown(f"""
-        <div style='background:#0f1117;border-radius:10px;padding:1rem;border:1px solid #2d3148;'>
-            <p style='color:#666;font-size:12px;margin:0;'>Último ciclo</p>
-            <p style='color:#fff;font-size:15px;margin:4px 0 0;font-weight:500;'>{texto_ultimo}</p>
+        <div class='status-card'>
+            <p class='label'>Último ciclo</p>
+            <p class='value'>{texto_ultimo}</p>
         </div>""", unsafe_allow_html=True)
     with col_s3:
         total = len(st.session_state.historico_ciclos)
         st.markdown(f"""
-        <div style='background:#0f1117;border-radius:10px;padding:1rem;border:1px solid #2d3148;'>
-            <p style='color:#666;font-size:12px;margin:0;'>Ciclos executados</p>
-            <p style='color:#fff;font-size:15px;margin:4px 0 0;font-weight:500;'>{total} nesta sessão</p>
+        <div class='status-card'>
+            <p class='label'>Ciclos nesta sessão</p>
+            <p class='value'>{total}</p>
         </div>""", unsafe_allow_html=True)
 
     st.markdown("")
