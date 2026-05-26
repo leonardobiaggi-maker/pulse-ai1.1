@@ -313,7 +313,10 @@ elif "Radar" in pagina:
     available  = {k: v for k, v in show_cols.items() if k in produtos_view.columns}
     df_display = produtos_view[list(available.keys())].rename(columns=available)
 
-    RISCO_BG = {"Critico": "background-color:#fff0f0", "Alto": "background-color:#fff8f0"}
+    RISCO_BG = {
+        "Critico": "background-color:#3d1515; color:#ffaaaa",
+        "Alto":    "background-color:#3d2810; color:#ffcc88",
+    }
 
     def highlight(row):
         styles = [""] * len(row)
@@ -328,12 +331,21 @@ elif "Radar" in pagina:
             v = row.iloc[di]
             if isinstance(v, (int, float)):
                 if v <= 3:
-                    styles[di] = "background-color:#FCEBEB;color:#791F1F;font-weight:bold"
+                    styles[di] = "background-color:#5a1a1a; color:#ffaaaa; font-weight:bold"
                 elif v <= 7:
-                    styles[di] = "background-color:#FAEEDA;color:#633806"
+                    styles[di] = "background-color:#5a3a10; color:#ffcc88"
         return styles
 
-    st.dataframe(df_display.style.apply(highlight, axis=1), use_container_width=True)
+    fmt = {}
+    if "Dias cobertura" in df_display.columns:
+        fmt["Dias cobertura"] = "{:.1f}"
+    if "Impacto (R$)" in df_display.columns:
+        fmt["Impacto (R$)"] = "{:,.0f}"
+
+    st.dataframe(
+        df_display.style.apply(highlight, axis=1).format(fmt),
+        use_container_width=True
+    )
 
 # =========================
 # MATRIZ DE RISCO
