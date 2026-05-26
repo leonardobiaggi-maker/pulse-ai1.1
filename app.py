@@ -1180,10 +1180,33 @@ elif pagina == "Como o agente funciona":
 # =========================
 elif pagina == "Executar agente":
 
+    # ── Carregar histórico persistido ──
+    import json, os
+    HIST_FILE = "historico_ciclos.json"
+
     if "historico_ciclos" not in st.session_state:
-        st.session_state.historico_ciclos = []
+        if os.path.exists(HIST_FILE):
+            try:
+                with open(HIST_FILE, "r", encoding="utf-8") as f:
+                    st.session_state.historico_ciclos = json.load(f)
+            except Exception:
+                st.session_state.historico_ciclos = []
+        else:
+            st.session_state.historico_ciclos = []
+
     if "ultimo_ciclo" not in st.session_state:
-        st.session_state.ultimo_ciclo = None
+        if st.session_state.historico_ciclos:
+            try:
+                ultimo_str = st.session_state.historico_ciclos[-1]["hora"]
+                st.session_state.ultimo_ciclo = datetime.strptime(
+                    st.session_state.historico_ciclos[-1].get("data_hora",
+                    datetime.now().strftime("%d/%m/%Y") + " " + ultimo_str),
+                    "%d/%m/%Y %H:%M:%S"
+                )
+            except Exception:
+                st.session_state.ultimo_ciclo = None
+        else:
+            st.session_state.ultimo_ciclo = None
 
     st.subheader("Simulador de ciclo do agente")
 
@@ -1353,15 +1376,26 @@ elif pagina == "Executar agente":
 
         add_log("DONE", f"Ciclo concluido · {agora.strftime('%H:%M:%S')} · proximo ciclo em 60 min")
 
-        # Salvar no histórico
-        st.session_state.historico_ciclos.append({
+        # Salvar no histórico (sessão + arquivo)
+        novo_registro = {
+            "data_hora": agora.strftime("%d/%m/%Y %H:%M:%S"),
             "hora": agora.strftime("%H:%M:%S"),
             "criticos": len(criticos),
             "altos": len(altos),
             "bloqueadas": bloqueadas,
             "alertas": len(alertas_gerados),
-        })
+            "slack_enviado": slack_ok,
+        }
+        st.session_state.historico_ciclos.append(novo_registro)
         st.session_state.ultimo_ciclo = agora
+
+        # Persistir em arquivo (máximo 50 registros)
+        try:
+            with open(HIST_FILE, "w", encoding="utf-8") as f:
+                json.dump(st.session_state.historico_ciclos[-50:], f,
+                          ensure_ascii=False, indent=2)
+        except Exception:
+            pass
 
         # ── Resultados ──
         result_area.markdown("---")
@@ -1390,7 +1424,30 @@ elif pagina == "Executar agente":
     # Histórico de ciclos
     if st.session_state.historico_ciclos:
         st.markdown("---")
-        st.markdown("#### Histórico desta sessão")
+        st.markdown("#### Histórico de execuções")
+        st.caption("Salvo automaticamente — persiste após recarregar a página.")
         df_hist = pd.DataFrame(st.session_state.historico_ciclos)
-        df_hist.columns = ["Hora", "Críticos", "Altos", "Subs. bloqueadas", "Alertas enviados"]
-        st.dataframe(df_hist, use_container_width=True, hide_index=True)
+        col_map = {
+            "data_hora": "Data/Hora", "hora": "Hora",
+            "criticos": "Críticos", "altos": "Altos",
+            "bloqueadas": "Subs. bloqueadas", "alertas": "Alertas",
+            "slack_enviado": "Slack enviado",
+        }
+        df_hist = df_hist.rename(columns={k: v for k, v in col_map.items() if k in df_hist.columns})
+        if "Data/Hora" in df_hist.columns:
+            df_hist = df_hist.drop(columns=["Hora"], errors="ignore")
+        if "Slack enviado" in df_hist.columns:
+            df_hist["Slack enviado"] = df_hist["Slack enviado"].map(
+                {True: "Sim", False: "Não", None: "—"}
+            )
+        st.dataframe(df_hist[::-1], use_container_width=True, hide_index=True)
+
+        if st.button("Limpar histórico"):
+            st.session_state.historico_ciclos = []
+            try:
+                import os
+                if os.path.exists(HIST_FILE):
+                    os.remove(HIST_FILE)
+            except Exception:
+                pass
+            st.rerun()
