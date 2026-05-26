@@ -2,6 +2,8 @@ import streamlit as st
 import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
+import time
+from datetime import datetime
 
 # =========================
 # CONFIG PAGE
@@ -211,6 +213,7 @@ with st.sidebar:
             "🧠  Substituições",
             "💬  Alertas Slack",
             "⚙️  Como o agente funciona",
+            "🤖  Executar agente",
         ],
         label_visibility="collapsed"
     )
@@ -493,3 +496,176 @@ elif "agente" in pagina or "Como" in pagina:
         "O agente real rodaria como um script agendado (Airflow / cron) integrado ao data warehouse da Shopper, "
         "atuando de forma autônoma a cada ciclo operacional."
     )
+
+# =========================
+# EXECUTAR AGENTE (SIMULADOR)
+# =========================
+elif "Executar" in pagina or "agente" in pagina.lower() and "🤖" in pagina:
+
+    # Session state para histórico de execuções
+    if "historico_ciclos" not in st.session_state:
+        st.session_state.historico_ciclos = []
+    if "ultimo_ciclo" not in st.session_state:
+        st.session_state.ultimo_ciclo = None
+
+    st.subheader("🤖 Simulador de ciclo do agente")
+
+    # Status do agente
+    col_s1, col_s2, col_s3 = st.columns(3)
+    with col_s1:
+        st.markdown("""
+        <div style='background:#0f1117;border-radius:10px;padding:1rem;border:1px solid #1D9E7544;'>
+            <p style='color:#1D9E75;font-size:12px;margin:0;font-weight:600;'>● AGENTE ATIVO</p>
+            <p style='color:#fff;font-size:15px;margin:4px 0 0;font-weight:500;'>Monitoramento contínuo</p>
+        </div>""", unsafe_allow_html=True)
+    with col_s2:
+        ultimo = st.session_state.ultimo_ciclo
+        texto_ultimo = ultimo.strftime("%H:%M:%S") if ultimo else "Nenhum ciclo executado"
+        st.markdown(f"""
+        <div style='background:#0f1117;border-radius:10px;padding:1rem;border:1px solid #2d3148;'>
+            <p style='color:#666;font-size:12px;margin:0;'>Último ciclo</p>
+            <p style='color:#fff;font-size:15px;margin:4px 0 0;font-weight:500;'>{texto_ultimo}</p>
+        </div>""", unsafe_allow_html=True)
+    with col_s3:
+        total = len(st.session_state.historico_ciclos)
+        st.markdown(f"""
+        <div style='background:#0f1117;border-radius:10px;padding:1rem;border:1px solid #2d3148;'>
+            <p style='color:#666;font-size:12px;margin:0;'>Ciclos executados</p>
+            <p style='color:#fff;font-size:15px;margin:4px 0 0;font-weight:500;'>{total} nesta sessão</p>
+        </div>""", unsafe_allow_html=True)
+
+    st.markdown("")
+
+    # Botão de execução
+    executar = st.button("▶ Executar ciclo agora", type="primary", use_container_width=False)
+
+    st.markdown("")
+    log_area   = st.empty()
+    result_area = st.empty()
+    slack_area  = st.empty()
+
+    if executar:
+        agora = datetime.now()
+        st.session_state.ultimo_ciclo = agora
+        logs = []
+
+        def render_log(logs):
+            linhas = "\n".join(logs)
+            log_area.code(linhas, language="bash")
+
+        def add_log(nivel, mensagem):
+            ts = datetime.now().strftime("%H:%M:%S")
+            prefixo = {
+                "INFO":   "[INFO ]",
+                "OK":     "[ OK  ]",
+                "WARN":   "[WARN ]",
+                "CRIT":   "[CRIT ]",
+                "SLACK":  "[SLACK]",
+                "DONE":   "[ ✓  ]",
+            }.get(nivel, "[INFO ]")
+            logs.append(f"{ts}  {prefixo}  {mensagem}")
+            render_log(logs)
+
+        # ── PASSO 1: Coleta ──
+        add_log("INFO", "Iniciando ciclo do Pulse AI...")
+        time.sleep(0.6)
+        add_log("INFO", "Conectando ao data warehouse...")
+        time.sleep(0.8)
+        add_log("OK",   f"{len(produtos)} produtos carregados · {produtos['loja'].nunique()} lojas · {len(recorrencia)} pedidos recorrentes")
+        time.sleep(0.5)
+
+        # ── PASSO 2: Scores de risco ──
+        add_log("INFO", "Calculando scores de risco por produto × loja...")
+        time.sleep(0.7)
+
+        criticos, altos, alertas_gerados = [], [], []
+        for _, row in produtos.iterrows():
+            nivel = row["risco_ruptura"]
+            score = row.get("score_risco", 50)
+            dias  = row.get("dias_cobertura", 5)
+            if nivel == "Critico":
+                add_log("CRIT", f"{row['produto']} · {row['loja']} · cobertura: {dias}d · score: {score} → CRÍTICO")
+                criticos.append(row)
+                time.sleep(0.35)
+            elif nivel == "Alto":
+                add_log("WARN", f"{row['produto']} · {row['loja']} · cobertura: {dias}d · score: {score} → ALTO")
+                altos.append(row)
+                time.sleep(0.3)
+
+        add_log("OK", f"Scores calculados · {len(criticos)} críticos · {len(altos)} altos")
+        time.sleep(0.5)
+
+        # ── PASSO 3: Demanda ──
+        add_log("INFO", "Analisando variação de demanda vs histórico...")
+        time.sleep(0.8)
+        add_log("OK",   "Demanda +12% acima da média semanal — risco de antecipação de ruptura")
+        time.sleep(0.5)
+
+        # ── PASSO 4: Substituições ──
+        add_log("INFO", f"Avaliando substitutos para {len(criticos) + len(altos)} produtos em risco...")
+        time.sleep(0.6)
+
+        bloqueadas = 0
+        for _, row in substituicoes.iterrows():
+            score_sub = int(row.get("score_aceitacao", 80))
+            orig = row[orig_col]
+            sub  = row[sub_col]
+            if score_sub >= 80:
+                add_log("OK",   f"{orig} → {sub} · score aceitação: {score_sub}% ✓ aprovada")
+            else:
+                add_log("CRIT", f"{orig} → {sub} · score aceitação: {score_sub}% ⚠ BLOQUEADA — cliente sensível à marca")
+                bloqueadas += 1
+            time.sleep(0.35)
+
+        add_log("OK", f"Substituições avaliadas · {bloqueadas} bloqueada(s) por risco de rejeição")
+        time.sleep(0.5)
+
+        # ── PASSO 5: Alertas Slack ──
+        add_log("INFO", f"Disparando {len(alertas)} alertas para #pulse-alertas no Slack...")
+        time.sleep(0.6)
+        for _, row in alertas.iterrows():
+            add_log("SLACK", f"Alerta enviado → {row['produto']} · {row['loja']} · {row['risco_ruptura']}")
+            alertas_gerados.append(row)
+            time.sleep(0.3)
+
+        # ── PASSO 6: Conclusão ──
+        time.sleep(0.4)
+        add_log("DONE", f"Ciclo concluído · {agora.strftime('%H:%M:%S')} · próximo ciclo em 60 min")
+
+        # Salvar no histórico
+        st.session_state.historico_ciclos.append({
+            "hora": agora.strftime("%H:%M:%S"),
+            "criticos": len(criticos),
+            "altos": len(altos),
+            "bloqueadas": bloqueadas,
+            "alertas": len(alertas_gerados),
+        })
+        st.session_state.ultimo_ciclo = agora
+
+        # ── Resultados ──
+        result_area.markdown("""---""")
+        with result_area.container():
+            st.markdown("#### Resultado do ciclo")
+            r1, r2, r3, r4 = st.columns(4)
+            r1.metric("Produtos analisados", len(produtos))
+            r2.metric("🔴 Alertas críticos",  len(criticos))
+            r3.metric("🟠 Alertas altos",     len(altos))
+            r4.metric("🚫 Subs. bloqueadas",  bloqueadas)
+
+        # ── Preview Slack ──
+        with slack_area.container():
+            st.markdown("---")
+            st.markdown("#### 📨 Alertas enviados ao Slack — `#pulse-alertas`")
+            for _, row in alertas.iterrows():
+                emoji = "🔴" if row["risco_ruptura"] == "Critico" else "🟠"
+                with st.container(border=True):
+                    st.code(row["mensagem_slack"], language="text")
+                    st.caption(f"✅ Enviado às {agora.strftime('%H:%M:%S')} · canal #pulse-alertas")
+
+    # Histórico de ciclos
+    if st.session_state.historico_ciclos:
+        st.markdown("---")
+        st.markdown("#### 📋 Histórico desta sessão")
+        df_hist = pd.DataFrame(st.session_state.historico_ciclos)
+        df_hist.columns = ["Hora", "Críticos", "Altos", "Subs. bloqueadas", "Alertas enviados"]
+        st.dataframe(df_hist, use_container_width=True, hide_index=True)
