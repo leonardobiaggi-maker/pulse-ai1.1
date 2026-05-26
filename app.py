@@ -15,14 +15,17 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Shopper brand colors
-# Primary green : #00C25A
-# Dark green    : #009944
-# Background    : #0A0E17
-# Surface       : #111827
-# Border        : #1E2535
-# Text primary  : #F9FAFB
-# Text muted    : #6B7280
+# Shopper Brand — Light Theme
+# Primary green  : #00C25A
+# Dark green     : #009944
+# Green tint     : #E6F9EE
+# Background     : #F5F7FA
+# Surface        : #FFFFFF
+# Border         : #E5E7EB
+# Text primary   : #111827
+# Text muted     : #6B7280
+# Danger         : #DC2626
+# Warning        : #D97706
 
 st.markdown("""
 <style>
@@ -32,60 +35,83 @@ st.markdown("""
         font-family: 'Inter', sans-serif !important;
     }
 
+    /* Page background */
+    .stApp {
+        background-color: #F5F7FA !important;
+    }
+    .main .block-container {
+        background-color: #F5F7FA;
+        padding-top: 1.5rem !important;
+        padding-bottom: 2rem !important;
+    }
+
     /* Sidebar */
     [data-testid="stSidebar"] {
-        background-color: #0A0E17 !important;
-        border-right: 1px solid #1E2535;
+        background-color: #FFFFFF !important;
+        border-right: 1px solid #E5E7EB !important;
     }
     [data-testid="stSidebar"] * {
-        color: #D1D5DB !important;
+        color: #374151 !important;
     }
     [data-testid="stSidebar"] .stRadio label {
         font-size: 0.875rem !important;
         padding: 6px 0 !important;
+        color: #374151 !important;
     }
-
-    /* Fundo geral */
-    .main .block-container {
-        background-color: #0A0E17;
-        padding-top: 1.5rem !important;
+    [data-testid="stSidebar"] .stRadio label:hover {
+        color: #00C25A !important;
     }
 
     /* Header */
     .pulse-header {
-        background: #111827;
-        border-radius: 10px;
-        padding: 1.75rem 2rem;
+        background: #FFFFFF;
+        border-radius: 12px;
+        padding: 1.5rem 2rem;
         margin-bottom: 1.5rem;
-        border-left: 3px solid #00C25A;
+        border: 1px solid #E5E7EB;
         display: flex;
         align-items: center;
         justify-content: space-between;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+    }
+    .pulse-header-logo {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+    }
+    .pulse-header-logo img {
+        height: 32px;
+        object-fit: contain;
+    }
+    .pulse-header-divider {
+        width: 1px;
+        height: 32px;
+        background: #E5E7EB;
     }
     .pulse-header-left h1 {
-        color: #F9FAFB !important;
-        font-size: 1.5rem !important;
+        color: #111827 !important;
+        font-size: 1.25rem !important;
         font-weight: 700 !important;
         margin: 0 !important;
         letter-spacing: -0.02em;
     }
     .pulse-header-left p {
         color: #6B7280 !important;
-        margin: 4px 0 0 !important;
-        font-size: 0.875rem !important;
+        margin: 3px 0 0 !important;
+        font-size: 0.8rem !important;
     }
     .pulse-badge {
         display: inline-flex;
         align-items: center;
         gap: 6px;
-        background: #00C25A18;
-        color: #00C25A;
-        border: 1px solid #00C25A33;
+        background: #E6F9EE;
+        color: #00963F;
+        border: 1px solid #A7F3C4;
         border-radius: 6px;
         padding: 5px 12px;
-        font-size: 0.75rem;
+        font-size: 0.72rem;
         font-weight: 600;
-        letter-spacing: 0.04em;
+        letter-spacing: 0.05em;
     }
     .pulse-badge::before {
         content: '';
@@ -94,17 +120,24 @@ st.markdown("""
         border-radius: 50%;
         background: #00C25A;
         display: inline-block;
+        animation: pulse-dot 2s infinite;
+    }
+    @keyframes pulse-dot {
+        0%   { opacity: 1; }
+        50%  { opacity: 0.4; }
+        100% { opacity: 1; }
     }
 
     /* KPI cards */
     [data-testid="stMetric"] {
-        background: #111827 !important;
+        background: #FFFFFF !important;
         border-radius: 10px !important;
         padding: 1.1rem 1.25rem !important;
-        border: 1px solid #1E2535 !important;
+        border: 1px solid #E5E7EB !important;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.05) !important;
     }
     [data-testid="stMetricLabel"] p {
-        font-size: 0.75rem !important;
+        font-size: 0.72rem !important;
         color: #6B7280 !important;
         font-weight: 500 !important;
         text-transform: uppercase !important;
@@ -113,7 +146,7 @@ st.markdown("""
     [data-testid="stMetricValue"] {
         font-size: 1.6rem !important;
         font-weight: 700 !important;
-        color: #F9FAFB !important;
+        color: #111827 !important;
     }
     [data-testid="stMetricDelta"] {
         font-size: 0.75rem !important;
@@ -121,17 +154,17 @@ st.markdown("""
 
     /* Section titles */
     h2, h3 {
-        color: #F9FAFB !important;
+        color: #111827 !important;
         font-weight: 600 !important;
         letter-spacing: -0.01em !important;
     }
 
     /* Divider */
-    hr { border-color: #1E2535 !important; margin: 1.5rem 0 !important; }
+    hr { border-color: #E5E7EB !important; margin: 1.5rem 0 !important; }
 
-    /* Selectbox */
+    /* Selectbox label */
     .stSelectbox label p {
-        font-size: 0.8rem !important;
+        font-size: 0.78rem !important;
         color: #6B7280 !important;
         font-weight: 500 !important;
         text-transform: uppercase !important;
@@ -139,29 +172,32 @@ st.markdown("""
     }
 
     /* Dataframe */
-    .stDataFrame { border-radius: 8px; overflow: hidden; border: 1px solid #1E2535; }
+    .stDataFrame { border-radius: 8px; overflow: hidden; border: 1px solid #E5E7EB; }
 
     /* Container border */
     [data-testid="stVerticalBlockBorderWrapper"] {
-        border-color: #1E2535 !important;
+        border-color: #E5E7EB !important;
         border-radius: 10px !important;
-        background: #111827 !important;
+        background: #FFFFFF !important;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.04) !important;
     }
 
     /* Agent steps */
     .agent-step {
-        background: #111827;
+        background: #FFFFFF;
         border-radius: 8px;
         padding: 1rem 1.25rem;
         margin-bottom: 8px;
-        border-left: 2px solid #00C25A;
+        border: 1px solid #E5E7EB;
+        border-left: 3px solid #00C25A;
         display: flex;
         align-items: flex-start;
         gap: 1rem;
+        box-shadow: 0 1px 2px rgba(0,0,0,0.04);
     }
     .agent-step-num {
         background: #00C25A;
-        color: #0A0E17;
+        color: #FFFFFF;
         border-radius: 50%;
         width: 26px;
         height: 26px;
@@ -175,7 +211,7 @@ st.markdown("""
     }
     .agent-step-content h4 {
         margin: 0 0 3px 0;
-        color: #F9FAFB;
+        color: #111827;
         font-size: 0.9rem;
         font-weight: 600;
     }
@@ -188,11 +224,12 @@ st.markdown("""
 
     /* Impact cards */
     .impact-card {
-        background: #111827;
+        background: #FFFFFF;
         border-radius: 8px;
         padding: 1.25rem;
         text-align: center;
-        border: 1px solid #1E2535;
+        border: 1px solid #E5E7EB;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.04);
     }
     .impact-card .value {
         font-size: 1.75rem;
@@ -209,29 +246,66 @@ st.markdown("""
         font-weight: 500;
     }
 
-    /* Agent status cards */
+    /* Status cards */
     .status-card {
-        background: #111827;
+        background: #FFFFFF;
         border-radius: 8px;
         padding: 1rem 1.25rem;
-        border: 1px solid #1E2535;
+        border: 1px solid #E5E7EB;
+        box-shadow: 0 1px 2px rgba(0,0,0,0.04);
     }
     .status-card .label {
-        color: #6B7280;
-        font-size: 0.75rem;
+        color: #9CA3AF;
+        font-size: 0.72rem;
         font-weight: 500;
         text-transform: uppercase;
-        letter-spacing: 0.05em;
+        letter-spacing: 0.06em;
         margin: 0;
     }
     .status-card .value {
-        color: #F9FAFB;
+        color: #111827;
         font-size: 0.95rem;
         font-weight: 600;
         margin: 4px 0 0;
     }
-    .status-card.active .label { color: #00C25A; }
-    .status-card.active .value { color: #00C25A; }
+    .status-card.active {
+        background: #E6F9EE;
+        border-color: #A7F3C4;
+    }
+    .status-card.active .label { color: #00963F; }
+    .status-card.active .value { color: #00963F; }
+
+    /* Sidebar logo */
+    .sidebar-logo {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 4px;
+    }
+    .sidebar-logo img {
+        height: 28px;
+        object-fit: contain;
+    }
+    .sidebar-pulse-label {
+        font-size: 0.8rem;
+        color: #6B7280 !important;
+        margin: 0 0 12px 0;
+        padding-bottom: 12px;
+        border-bottom: 1px solid #E5E7EB;
+        display: block;
+    }
+
+    /* Button */
+    .stButton > button[kind="primary"] {
+        background: #00C25A !important;
+        border: none !important;
+        color: #FFFFFF !important;
+        font-weight: 600 !important;
+        border-radius: 8px !important;
+    }
+    .stButton > button[kind="primary"]:hover {
+        background: #009944 !important;
+    }
 </style>
 """, unsafe_allow_html=True)
 
@@ -242,10 +316,10 @@ excel_file = "Pulse_AI_Base.xlsx"
 
 @st.cache_data(ttl=300)
 def load_data():
-    produtos     = pd.read_excel(excel_file, sheet_name="produtos")
-    recorrencia  = pd.read_excel(excel_file, sheet_name="recorrencia_futura")
+    produtos      = pd.read_excel(excel_file, sheet_name="produtos")
+    recorrencia   = pd.read_excel(excel_file, sheet_name="recorrencia_futura")
     substituicoes = pd.read_excel(excel_file, sheet_name="substituicoes")
-    alertas      = pd.read_excel(excel_file, sheet_name="alertas")
+    alertas       = pd.read_excel(excel_file, sheet_name="alertas")
     return produtos, recorrencia, substituicoes, alertas
 
 produtos, recorrencia, substituicoes, alertas = load_data()
@@ -282,7 +356,7 @@ if "motivo_recomendacao" not in substituicoes.columns:
         "Mesma marca, gramatura equivalente",
         "Histórico: cliente aceitou 3× nos últimos 60 dias",
         "Produto similar, preço levemente superior",
-        "⚠️ Cliente sensível à marca — risco elevado de rejeição",
+        "Cliente sensível à marca — risco elevado de rejeição",
     ] * 10)[:len(substituicoes)]
 
 orig_col = next((c for c in substituicoes.columns if "original"  in c.lower()), substituicoes.columns[0])
@@ -294,12 +368,13 @@ disp_col = next((c for c in substituicoes.columns if "disp"      in c.lower()), 
 # SIDEBAR — NAVEGAÇÃO
 # =========================
 with st.sidebar:
-    st.markdown(
-        "<p style='font-size:1.1rem;font-weight:700;color:#F9FAFB;margin:0;letter-spacing:-0.01em;'>Pulse AI</p>"
-        "<p style='font-size:0.78rem;color:#6B7280;margin:2px 0 0;'>Shopper · Prevenção de Ruptura</p>",
-        unsafe_allow_html=True
-    )
-    st.markdown("---")
+    st.markdown("""
+    <div class="sidebar-logo">
+        <img src="https://shopper.com.br/static/img/og-logo.png" alt="Shopper" />
+    </div>
+    <span class="sidebar-pulse-label">Pulse AI · Prevenção de Ruptura</span>
+    """, unsafe_allow_html=True)
+
     pagina = st.radio(
         "Navegar para",
         [
@@ -315,24 +390,28 @@ with st.sidebar:
     )
     st.markdown("---")
     st.markdown(
-        "<small style='color:#374151;font-size:0.75rem;'>Atualizado a cada 5 min<br>Fonte: Pulse_AI_Base.xlsx</small>",
+        "<small style='color:#9CA3AF;font-size:0.72rem;'>Atualizado a cada 5 min<br>Fonte: Pulse_AI_Base.xlsx</small>",
         unsafe_allow_html=True
     )
 
 # =========================
 # HEADER
 # =========================
-em_risco      = len(produtos[produtos["risco_ruptura"].isin(["Critico", "Alto"])])
-impacto_total = int(produtos["impacto_financeiro_estimado"].sum())
-dias_medio    = round(produtos["dias_cobertura"].mean(), 1)
-pedidos_total = len(recorrencia)
+em_risco       = len(produtos[produtos["risco_ruptura"].isin(["Critico", "Alto"])])
+impacto_total  = int(produtos["impacto_financeiro_estimado"].sum())
+dias_medio     = round(produtos["dias_cobertura"].mean(), 1)
+pedidos_total  = len(recorrencia)
 alertas_ativos = len(alertas)
 
 st.markdown(f"""
 <div class="pulse-header">
-    <div class="pulse-header-left">
-        <h1>Pulse AI</h1>
-        <p>Agente Inteligente de Prevenção de Ruptura · Shopper</p>
+    <div class="pulse-header-logo">
+        <img src="https://shopper.com.br/static/img/og-logo.png" alt="Shopper" />
+        <div class="pulse-header-divider"></div>
+        <div class="pulse-header-left">
+            <h1>Pulse AI</h1>
+            <p>Agente Inteligente de Prevenção de Ruptura</p>
+        </div>
     </div>
     <span class="pulse-badge">AGENTE ATIVO</span>
 </div>
@@ -365,18 +444,22 @@ if pagina == "Visão geral":
     fig_loja = px.bar(
         impacto_loja, x="loja", y="impacto_financeiro_estimado",
         color="impacto_financeiro_estimado",
-        color_continuous_scale=["#1D9E75", "#378ADD", "#D85A30", "#E24B4A"],
+        color_continuous_scale=["#A7F3C4", "#00C25A", "#009944", "#006B2F"],
         text_auto=True,
         labels={"loja": "Loja", "impacto_financeiro_estimado": "Impacto (R$)"},
         height=320,
     )
     fig_loja.update_coloraxes(showscale=False)
     fig_loja.update_traces(texttemplate="R$ %{y:,.0f}", textposition="outside")
-    fig_loja.update_layout(plot_bgcolor="rgba(0,0,0,0)", paper_bgcolor="rgba(0,0,0,0)")
+    fig_loja.update_layout(
+        plot_bgcolor="rgba(0,0,0,0)",
+        paper_bgcolor="rgba(0,0,0,0)",
+        font_color="#374151",
+    )
     st.plotly_chart(fig_loja, use_container_width=True)
 
     st.markdown("---")
-    st.subheader("Demanda prevista")
+    st.subheader("Demanda prevista — pedidos recorrentes")
 
     recorrencia_group = (
         recorrencia.groupby("data_entrega_prevista")["quantidade_prevista"]
@@ -386,8 +469,12 @@ if pagina == "Visão geral":
         recorrencia_group, x="data_entrega_prevista", y="quantidade_prevista",
         markers=True, height=280,
     )
-    fig_recor.update_traces(line_color="#378ADD", fillcolor="rgba(55,138,221,0.12)")
-    fig_recor.update_layout(plot_bgcolor="rgba(0,0,0,0)", paper_bgcolor="rgba(0,0,0,0)")
+    fig_recor.update_traces(line_color="#00C25A", fillcolor="rgba(0,194,90,0.10)")
+    fig_recor.update_layout(
+        plot_bgcolor="rgba(0,0,0,0)",
+        paper_bgcolor="rgba(0,0,0,0)",
+        font_color="#374151",
+    )
     st.plotly_chart(fig_recor, use_container_width=True)
 
 # =========================
@@ -411,9 +498,10 @@ elif pagina == "Radar de ruptura":
     available  = {k: v for k, v in show_cols.items() if k in produtos_view.columns}
     df_display = produtos_view[list(available.keys())].rename(columns=available)
 
+    # Light theme: backgrounds suaves
     RISCO_BG = {
-        "Critico": "background-color:#3d1515; color:#ffaaaa",
-        "Alto":    "background-color:#3d2810; color:#ffcc88",
+        "Critico": "background-color:#FEE2E2; color:#991B1B",
+        "Alto":    "background-color:#FEF3C7; color:#92400E",
     }
 
     def highlight(row):
@@ -429,9 +517,9 @@ elif pagina == "Radar de ruptura":
             v = row.iloc[di]
             if isinstance(v, (int, float)):
                 if v <= 3:
-                    styles[di] = "background-color:#5a1a1a; color:#ffaaaa; font-weight:bold"
+                    styles[di] = "background-color:#FCA5A5; color:#7F1D1D; font-weight:bold"
                 elif v <= 7:
-                    styles[di] = "background-color:#5a3a10; color:#ffcc88"
+                    styles[di] = "background-color:#FCD34D; color:#78350F"
         return styles
 
     fmt = {}
@@ -458,7 +546,12 @@ elif pagina == "Matriz de risco":
         size="pedidos_recorrentes_afetados", color="risco_ruptura",
         hover_name="produto",
         hover_data={"loja": True, "score_risco": True, "dias_cobertura": True, "pedidos_recorrentes_afetados": True},
-        color_discrete_map={"Critico": "#E24B4A", "Alto": "#D85A30", "Medio": "#378ADD", "Baixo": "#1D9E75"},
+        color_discrete_map={
+            "Critico": "#DC2626",
+            "Alto":    "#D97706",
+            "Medio":   "#2563EB",
+            "Baixo":   "#00C25A",
+        },
         labels={
             "dias_cobertura": "Dias de cobertura",
             "impacto_financeiro_estimado": "Impacto financeiro (R$)",
@@ -466,11 +559,15 @@ elif pagina == "Matriz de risco":
         },
         size_max=50, height=480,
     )
-    fig_matrix.add_vline(x=3, line_dash="dash", line_color="#E24B4A",
+    fig_matrix.add_vline(x=3, line_dash="dash", line_color="#DC2626",
                          annotation_text="Zona crítica (< 3d)", annotation_position="top right")
-    fig_matrix.add_vline(x=7, line_dash="dash", line_color="#D85A30",
+    fig_matrix.add_vline(x=7, line_dash="dash", line_color="#D97706",
                          annotation_text="Alerta (< 7d)", annotation_position="top right")
-    fig_matrix.update_layout(plot_bgcolor="rgba(0,0,0,0)", paper_bgcolor="rgba(0,0,0,0)")
+    fig_matrix.update_layout(
+        plot_bgcolor="rgba(0,0,0,0)",
+        paper_bgcolor="rgba(0,0,0,0)",
+        font_color="#374151",
+    )
     st.plotly_chart(fig_matrix, use_container_width=True)
 
 # =========================
@@ -485,24 +582,32 @@ elif pagina == "Substituições":
         delta  = row.get("delta_preco_pct", 0)
         motivo = row.get("motivo_recomendacao", "—")
 
-        score_label = "🟢 Alta aceitação" if score >= 85 else ("🟡 Moderada" if score >= 70 else "🔴 Risco de rejeição")
-        delta_str   = "Mesmo preço" if delta == 0 else (f"+{delta}%" if delta > 0 else f"{delta}%")
-        delta_icon  = "➡️" if delta == 0 else ("🔺" if delta > 0 else "🔻")
+        if score >= 85:
+            score_label = "Alta aceitação"
+            score_color = "#00963F"
+        elif score >= 70:
+            score_label = "Aceitação moderada"
+            score_color = "#D97706"
+        else:
+            score_label = "Risco de rejeição"
+            score_color = "#DC2626"
+
+        delta_str = "Mesmo preço" if delta == 0 else (f"+{delta}%" if delta > 0 else f"{delta}%")
 
         with st.container(border=True):
             col1, col2, col3 = st.columns([5, 3, 2])
             with col1:
                 st.markdown(f"**{row[orig_col]}** → **{row[sub_col]}**")
-                st.caption(f"💡 {motivo}")
+                st.caption(motivo)
                 if sim_col and sim_col in row.index:
                     st.caption(f"Similaridade: {row[sim_col]}")
             with col2:
-                st.markdown(f"**{score_label}**")
+                st.markdown(f"<span style='color:{score_color};font-weight:600;font-size:0.875rem;'>{score_label}</span>", unsafe_allow_html=True)
                 st.progress(score / 100)
                 st.caption(f"{score}% de chance de aceite")
             with col3:
                 st.markdown("**Variação de preço**")
-                st.markdown(f"{delta_icon} **{delta_str}**")
+                st.markdown(f"**{delta_str}**")
                 if disp_col and disp_col in row.index:
                     st.caption(f"Status: {row[disp_col]}")
 
@@ -515,7 +620,10 @@ elif pagina == "Alertas Slack":
     st.markdown("")
 
     for _, row in alertas.iterrows():
-        emoji = "🔴" if row["risco_ruptura"] == "Critico" else ("🟠" if row["risco_ruptura"] == "Alto" else "🟡")
+        nivel = row["risco_ruptura"]
+        badge_color = "#FEE2E2" if nivel == "Critico" else ("#FEF3C7" if nivel == "Alto" else "#EFF6FF")
+        text_color  = "#991B1B" if nivel == "Critico" else ("#92400E" if nivel == "Alto" else "#1E40AF")
+        label_risco = f"<span style='background:{badge_color};color:{text_color};padding:2px 10px;border-radius:4px;font-size:0.78rem;font-weight:600;'>{nivel}</span>"
 
         prod_data    = produtos[produtos["produto"] == row["produto"]]
         urgencia_str = ""
@@ -523,20 +631,18 @@ elif pagina == "Alertas Slack":
             dias  = prod_data.iloc[0]["dias_cobertura"]
             prazo = prod_data.iloc[0].get("prazo_reposicao", 3)
             urgencia_str = (
-                "⚠️ **Ruptura iminente** — cobertura abaixo do prazo de reposição"
+                "Ruptura iminente — cobertura abaixo do prazo de reposição"
                 if dias < prazo
-                else f"📅 Cobertura estimada: **{dias} dias** (prazo reposição: {prazo}d)"
+                else f"Cobertura estimada: **{dias} dias** (prazo reposição: {prazo}d)"
             )
 
         with st.container(border=True):
-            st.markdown(f"### {emoji} Pulse AI Alert")
+            st.markdown(f"**{row['produto']}** &nbsp; {label_risco}", unsafe_allow_html=True)
             col1, col2 = st.columns(2)
             with col1:
-                st.markdown(f"**Produto:** {row['produto']}")
                 st.markdown(f"**Loja:** {row['loja']}")
-                st.markdown(f"**Risco:** {row['risco_ruptura']}")
-            with col2:
                 st.markdown(f"**Impacto:** R$ {int(row['impacto_financeiro_estimado']):,}".replace(",", "."))
+            with col2:
                 st.markdown(f"**Pedidos afetados:** {row['pedidos_recorrentes_afetados']}")
                 if urgencia_str:
                     st.markdown(urgencia_str)
@@ -602,7 +708,7 @@ elif pagina == "Como o agente funciona":
 
     st.markdown("")
     st.info(
-        "💡 **Para a competição:** O Streamlit é a camada de visualização. "
+        "Para a competição: o Streamlit é a camada de visualização. "
         "O agente real rodaria como um script agendado (Airflow / cron) integrado ao data warehouse da Shopper, "
         "atuando de forma autônoma a cada ciclo operacional."
     )
@@ -645,11 +751,10 @@ elif pagina == "Executar agente":
 
     st.markdown("")
 
-    # Botão de execução
-    executar = st.button("▶ Executar ciclo agora", type="primary", use_container_width=False)
+    executar = st.button("Executar ciclo agora", type="primary", use_container_width=False)
 
     st.markdown("")
-    log_area   = st.empty()
+    log_area    = st.empty()
     result_area = st.empty()
     slack_area  = st.empty()
 
@@ -665,12 +770,12 @@ elif pagina == "Executar agente":
         def add_log(nivel, mensagem):
             ts = datetime.now().strftime("%H:%M:%S")
             prefixo = {
-                "INFO":   "[INFO ]",
-                "OK":     "[ OK  ]",
-                "WARN":   "[WARN ]",
-                "CRIT":   "[CRIT ]",
-                "SLACK":  "[SLACK]",
-                "DONE":   "[ ✓  ]",
+                "INFO":  "[INFO ]",
+                "OK":    "[ OK  ]",
+                "WARN":  "[WARN ]",
+                "CRIT":  "[CRIT ]",
+                "SLACK": "[SLACK]",
+                "DONE":  "[ OK  ]",
             }.get(nivel, "[INFO ]")
             logs.append(f"{ts}  {prefixo}  {mensagem}")
             render_log(logs)
@@ -693,7 +798,7 @@ elif pagina == "Executar agente":
             score = row.get("score_risco", 50)
             dias  = row.get("dias_cobertura", 5)
             if nivel == "Critico":
-                add_log("CRIT", f"{row['produto']} · {row['loja']} · cobertura: {dias}d · score: {score} → CRÍTICO")
+                add_log("CRIT", f"{row['produto']} · {row['loja']} · cobertura: {dias}d · score: {score} → CRITICO")
                 criticos.append(row)
                 time.sleep(0.35)
             elif nivel == "Alto":
@@ -701,7 +806,7 @@ elif pagina == "Executar agente":
                 altos.append(row)
                 time.sleep(0.3)
 
-        add_log("OK", f"Scores calculados · {len(criticos)} críticos · {len(altos)} altos")
+        add_log("OK", f"Scores calculados · {len(criticos)} criticos · {len(altos)} altos")
         time.sleep(0.5)
 
         # ── PASSO 3: Demanda ──
@@ -720,9 +825,9 @@ elif pagina == "Executar agente":
             orig = row[orig_col]
             sub  = row[sub_col]
             if score_sub >= 80:
-                add_log("OK",   f"{orig} → {sub} · score aceitação: {score_sub}% ✓ aprovada")
+                add_log("OK",   f"{orig} -> {sub} · score: {score_sub}% aprovada")
             else:
-                add_log("CRIT", f"{orig} → {sub} · score aceitação: {score_sub}% ⚠ BLOQUEADA — cliente sensível à marca")
+                add_log("CRIT", f"{orig} -> {sub} · score: {score_sub}% BLOQUEADA (cliente sensivel a marca)")
                 bloqueadas += 1
             time.sleep(0.35)
 
@@ -739,7 +844,7 @@ elif pagina == "Executar agente":
 
         # ── PASSO 6: Conclusão ──
         time.sleep(0.4)
-        add_log("DONE", f"Ciclo concluído · {agora.strftime('%H:%M:%S')} · próximo ciclo em 60 min")
+        add_log("DONE", f"Ciclo concluido · {agora.strftime('%H:%M:%S')} · proximo ciclo em 60 min")
 
         # Salvar no histórico
         st.session_state.historico_ciclos.append({
@@ -752,29 +857,28 @@ elif pagina == "Executar agente":
         st.session_state.ultimo_ciclo = agora
 
         # ── Resultados ──
-        result_area.markdown("""---""")
+        result_area.markdown("---")
         with result_area.container():
             st.markdown("#### Resultado do ciclo")
             r1, r2, r3, r4 = st.columns(4)
             r1.metric("Produtos analisados", len(produtos))
-            r2.metric("🔴 Alertas críticos",  len(criticos))
-            r3.metric("🟠 Alertas altos",     len(altos))
-            r4.metric("🚫 Subs. bloqueadas",  bloqueadas)
+            r2.metric("Alertas críticos",    len(criticos))
+            r3.metric("Alertas altos",       len(altos))
+            r4.metric("Subs. bloqueadas",    bloqueadas)
 
         # ── Preview Slack ──
         with slack_area.container():
             st.markdown("---")
-            st.markdown("#### 📨 Alertas enviados ao Slack — `#pulse-alertas`")
+            st.markdown("#### Alertas enviados ao Slack — `#pulse-alertas`")
             for _, row in alertas.iterrows():
-                emoji = "🔴" if row["risco_ruptura"] == "Critico" else "🟠"
                 with st.container(border=True):
                     st.code(row["mensagem_slack"], language="text")
-                    st.caption(f"✅ Enviado às {agora.strftime('%H:%M:%S')} · canal #pulse-alertas")
+                    st.caption(f"Enviado às {agora.strftime('%H:%M:%S')} · canal #pulse-alertas")
 
     # Histórico de ciclos
     if st.session_state.historico_ciclos:
         st.markdown("---")
-        st.markdown("#### 📋 Histórico desta sessão")
+        st.markdown("#### Histórico desta sessão")
         df_hist = pd.DataFrame(st.session_state.historico_ciclos)
         df_hist.columns = ["Hora", "Críticos", "Altos", "Subs. bloqueadas", "Alertas enviados"]
         st.dataframe(df_hist, use_container_width=True, hide_index=True)
