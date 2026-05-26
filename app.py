@@ -512,58 +512,165 @@ st.markdown(f"""
 # =========================
 if pagina == "Visão geral":
 
+    # ── Banner situacional ──
+    criticos_count = len(produtos[produtos["risco_ruptura"] == "Critico"])
+    if criticos_count > 0:
+        st.markdown(f"""
+        <div style="background:#FEF2F2;border:1px solid #FECACA;border-left:4px solid #DC2626;
+                    border-radius:10px;padding:1rem 1.4rem;margin-bottom:1.5rem;
+                    display:flex;align-items:center;gap:12px;">
+            <div style="font-size:1.4rem;">⚠️</div>
+            <div>
+                <p style="margin:0;font-weight:700;color:#991B1B;font-size:0.95rem;">
+                    {criticos_count} produto(s) em ruptura crítica — ação imediata necessária
+                </p>
+                <p style="margin:4px 0 0;color:#B91C1C;font-size:0.82rem;">
+                    Estoque abaixo do prazo de reposição. Sem intervenção, pedidos recorrentes serão impactados ainda hoje.
+                </p>
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
+    else:
+        st.markdown("""
+        <div style="background:#ECFDF5;border:1px solid #A7F3C4;border-left:4px solid #00C25A;
+                    border-radius:10px;padding:1rem 1.4rem;margin-bottom:1.5rem;
+                    display:flex;align-items:center;gap:12px;">
+            <div style="font-size:1.4rem;">✅</div>
+            <div>
+                <p style="margin:0;font-weight:700;color:#065F46;font-size:0.95rem;">Operação estável</p>
+                <p style="margin:4px 0 0;color:#047857;font-size:0.82rem;">
+                    Nenhum produto em nível crítico no momento.
+                </p>
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
+
+    # ── KPIs ──
     col1, col2, col3, col4, col5 = st.columns(5)
-    col1.metric("Produtos em risco",   em_risco)
-    col2.metric("Impacto estimado",    f"R$ {impacto_total:,.0f}".replace(",", "."))
+    col1.metric(
+        "Produtos em risco", em_risco,
+        help="Produtos classificados como Crítico ou Alto risco de ruptura agora"
+    )
+    col2.metric(
+        "Impacto financeiro", f"R$ {impacto_total:,.0f}".replace(",", "."),
+        help="Receita estimada em risco caso as rupturas não sejam resolvidas"
+    )
     col3.metric(
         "Cobertura média", f"{dias_medio}d",
-        delta=f"{round(dias_medio - 10, 1)}d vs meta",
-        delta_color="normal" if dias_medio >= 10 else "inverse"
+        delta=f"{round(dias_medio - 10, 1)}d vs meta 10d",
+        delta_color="normal" if dias_medio >= 10 else "inverse",
+        help="Quantos dias, em média, o estoque atual cobre a demanda. Meta: 10 dias."
     )
-    col4.metric("Pedidos recorrentes", pedidos_total)
-    col5.metric("Alertas ativos",      alertas_ativos)
+    col4.metric(
+        "Pedidos recorrentes", pedidos_total,
+        help="Entregas recorrentes programadas que podem ser afetadas pelas rupturas"
+    )
+    col5.metric(
+        "Alertas disparados", alertas_ativos,
+        help="Alertas enviados automaticamente ao Slack pelo agente neste ciclo"
+    )
+
+    # ── Top 3 ações urgentes ──
+    st.markdown("---")
+    st.subheader("Prioridades agora")
+    st.caption("O Pulse AI identificou as seguintes ações ordenadas por impacto financeiro.")
+
+    top_alertas = alertas.nlargest(3, "impacto_financeiro_estimado")
+    for i, (_, row) in enumerate(top_alertas.iterrows(), 1):
+        nivel = row["risco_ruptura"]
+        cor_borda = "#DC2626" if nivel == "Critico" else "#D97706"
+        cor_bg    = "#FEF2F2" if nivel == "Critico" else "#FFFBEB"
+        cor_texto = "#991B1B" if nivel == "Critico" else "#92400E"
+        st.markdown(f"""
+        <div style="background:{cor_bg};border:1px solid;border-color:{cor_borda}33;
+                    border-left:4px solid {cor_borda};border-radius:10px;
+                    padding:0.9rem 1.2rem;margin-bottom:8px;display:flex;align-items:flex-start;gap:14px;">
+            <div style="font-size:1.1rem;font-weight:800;color:{cor_borda};min-width:22px;">
+                {i}
+            </div>
+            <div style="flex:1;">
+                <p style="margin:0;font-weight:700;color:#111827;font-size:0.9rem;">
+                    {row['produto']} <span style="font-weight:400;color:#6B7280;">· {row['loja']}</span>
+                </p>
+                <p style="margin:4px 0 0;color:#374151;font-size:0.82rem;">{row['acao_sugerida']}</p>
+            </div>
+            <div style="text-align:right;flex-shrink:0;">
+                <p style="margin:0;font-weight:700;color:{cor_texto};font-size:0.95rem;">
+                    R$ {int(row['impacto_financeiro_estimado']):,}
+                </p>
+                <p style="margin:2px 0 0;color:#9CA3AF;font-size:0.72rem;">impacto estimado</p>
+            </div>
+        </div>
+        """.replace(",", "."), unsafe_allow_html=True)
+
+    # ── Charts ──
+    st.markdown("---")
+    col_c1, col_c2 = st.columns([3, 2])
+
+    with col_c1:
+        st.subheader("Impacto por loja")
+        st.caption("Receita em risco acumulada por filial. Lojas com maior barra exigem atenção prioritária.")
+        impacto_loja = (
+            produtos.groupby("loja")["impacto_financeiro_estimado"]
+            .sum().reset_index()
+            .sort_values("impacto_financeiro_estimado", ascending=False)
+        )
+        fig_loja = px.bar(
+            impacto_loja, x="loja", y="impacto_financeiro_estimado",
+            color="impacto_financeiro_estimado",
+            color_continuous_scale=["#A7F3C4", "#00C25A", "#009944", "#065F46"],
+            text_auto=True,
+            labels={"loja": "Loja", "impacto_financeiro_estimado": "Impacto (R$)"},
+            height=320,
+        )
+        fig_loja.update_coloraxes(showscale=False)
+        fig_loja.update_traces(texttemplate="R$ %{y:,.0f}", textposition="outside")
+        fig_loja.update_layout(
+            plot_bgcolor="rgba(0,0,0,0)", paper_bgcolor="rgba(0,0,0,0)",
+            font_color="#374151", margin=dict(t=20, b=10),
+        )
+        st.plotly_chart(fig_loja, use_container_width=True)
+
+    with col_c2:
+        st.subheader("Distribuição por risco")
+        st.caption("Proporção de produtos por nível de alerta.")
+        dist_risco = produtos["risco_ruptura"].value_counts().reset_index()
+        dist_risco.columns = ["Risco", "Qtd"]
+        fig_pie = px.pie(
+            dist_risco, names="Risco", values="Qtd",
+            color="Risco",
+            color_discrete_map={
+                "Critico": "#DC2626", "Alto": "#D97706",
+                "Medio": "#2563EB", "Baixo": "#00C25A"
+            },
+            height=320,
+        )
+        fig_pie.update_traces(textposition="inside", textinfo="percent+label")
+        fig_pie.update_layout(
+            plot_bgcolor="rgba(0,0,0,0)", paper_bgcolor="rgba(0,0,0,0)",
+            font_color="#374151", showlegend=False, margin=dict(t=20, b=10),
+        )
+        st.plotly_chart(fig_pie, use_container_width=True)
 
     st.markdown("---")
-    st.subheader("Impacto financeiro por loja")
-
-    impacto_loja = (
-        produtos.groupby("loja")["impacto_financeiro_estimado"]
-        .sum().reset_index()
-        .sort_values("impacto_financeiro_estimado", ascending=False)
+    st.subheader("Demanda prevista — próximos 10 dias")
+    st.caption(
+        "Volume de pedidos recorrentes esperado. Picos de demanda com estoque baixo = risco elevado. "
+        "O agente usa essa projeção para antecipar alertas antes que a ruptura aconteça."
     )
-    fig_loja = px.bar(
-        impacto_loja, x="loja", y="impacto_financeiro_estimado",
-        color="impacto_financeiro_estimado",
-        color_continuous_scale=["#A7F3C4", "#00C25A", "#009944", "#006B2F"],
-        text_auto=True,
-        labels={"loja": "Loja", "impacto_financeiro_estimado": "Impacto (R$)"},
-        height=320,
-    )
-    fig_loja.update_coloraxes(showscale=False)
-    fig_loja.update_traces(texttemplate="R$ %{y:,.0f}", textposition="outside")
-    fig_loja.update_layout(
-        plot_bgcolor="rgba(0,0,0,0)",
-        paper_bgcolor="rgba(0,0,0,0)",
-        font_color="#374151",
-    )
-    st.plotly_chart(fig_loja, use_container_width=True)
-
-    st.markdown("---")
-    st.subheader("Demanda prevista — pedidos recorrentes")
-
     recorrencia_group = (
         recorrencia.groupby("data_entrega_prevista")["quantidade_prevista"]
         .sum().reset_index()
     )
     fig_recor = px.area(
         recorrencia_group, x="data_entrega_prevista", y="quantidade_prevista",
-        markers=True, height=280,
+        markers=True, height=260,
+        labels={"data_entrega_prevista": "Data", "quantidade_prevista": "Pedidos previstos"},
     )
     fig_recor.update_traces(line_color="#00C25A", fillcolor="rgba(0,194,90,0.10)")
     fig_recor.update_layout(
-        plot_bgcolor="rgba(0,0,0,0)",
-        paper_bgcolor="rgba(0,0,0,0)",
-        font_color="#374151",
+        plot_bgcolor="rgba(0,0,0,0)", paper_bgcolor="rgba(0,0,0,0)",
+        font_color="#374151", margin=dict(t=10, b=10),
     )
     st.plotly_chart(fig_recor, use_container_width=True)
 
@@ -573,22 +680,75 @@ if pagina == "Visão geral":
 elif pagina == "Radar de ruptura":
     st.subheader("Radar de Ruptura")
 
-    col_f1, _ = st.columns([2, 6])
+    # ── O que é esse radar ──
+    st.markdown("""
+    <div style="background:#F8FAFC;border:1px solid #E9ECF0;border-radius:10px;
+                padding:1rem 1.4rem;margin-bottom:1.25rem;">
+        <p style="margin:0;font-weight:600;color:#111827;font-size:0.875rem;">
+            O que este radar monitora
+        </p>
+        <p style="margin:6px 0 0;color:#6B7280;font-size:0.82rem;line-height:1.6;">
+            Para cada produto e loja, o agente calcula quantos dias o estoque atual consegue
+            atender a demanda (<strong>Dias de cobertura</strong>) e compara com o tempo
+            necessário para repor (<strong>Prazo de reposição</strong>).
+            Quando a cobertura é menor que o prazo, a ruptura já está acontecendo.
+            O <strong>Score de risco</strong> combina esses fatores em um número de 0 a 100.
+        </p>
+    </div>
+    """, unsafe_allow_html=True)
+
+    # ── Legenda de risco ──
+    st.markdown("""
+    <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:1rem;">
+        <span style="background:#FEE2E2;color:#991B1B;padding:3px 10px;border-radius:5px;
+                     font-size:0.75rem;font-weight:600;border:1px solid #FECACA;">
+            Crítico — Cobertura &lt; Prazo de reposição. Ruptura iminente.
+        </span>
+        <span style="background:#FEF3C7;color:#92400E;padding:3px 10px;border-radius:5px;
+                     font-size:0.75rem;font-weight:600;border:1px solid #FDE68A;">
+            Alto — Cobertura abaixo de 7 dias. Monitoramento intenso.
+        </span>
+        <span style="background:#DBEAFE;color:#1E40AF;padding:3px 10px;border-radius:5px;
+                     font-size:0.75rem;font-weight:600;border:1px solid #BFDBFE;">
+            Médio — Estoque adequado, mas em tendência de queda.
+        </span>
+        <span style="background:#DCFCE7;color:#166534;padding:3px 10px;border-radius:5px;
+                     font-size:0.75rem;font-weight:600;border:1px solid #BBF7D0;">
+            Baixo — Cobertura confortável.
+        </span>
+    </div>
+    """, unsafe_allow_html=True)
+
+    # ── Filtro + resumo ──
+    col_f1, col_f2, col_f3, col_f4 = st.columns(4)
     with col_f1:
-        risco_filter = st.selectbox("Filtrar risco", ["Todos", "Critico", "Alto", "Medio", "Baixo"])
+        risco_filter = st.selectbox("Filtrar por nível", ["Todos", "Critico", "Alto", "Medio", "Baixo"])
 
     produtos_view = produtos if risco_filter == "Todos" else produtos[produtos["risco_ruptura"] == risco_filter]
 
+    total_view = len(produtos_view)
+    impacto_view = int(produtos_view["impacto_financeiro_estimado"].sum())
+    col_f2.metric("Produtos exibidos", total_view)
+    col_f3.metric("Impacto filtrado", f"R$ {impacto_view:,.0f}".replace(",", "."))
+    col_f4.metric("Score médio", int(produtos_view["score_risco"].mean()) if "score_risco" in produtos_view.columns else "—")
+
+    # ── Tabela enriquecida ──
+    produtos_view = produtos_view.copy()
+    if "dias_cobertura" in produtos_view.columns and "prazo_reposicao" in produtos_view.columns:
+        produtos_view["status_cobertura"] = produtos_view.apply(
+            lambda r: "Ruptura ativa" if r["dias_cobertura"] < r["prazo_reposicao"] else "OK", axis=1
+        )
+
     show_cols = {
         "produto": "Produto", "loja": "Loja", "risco_ruptura": "Risco",
-        "estoque_atual": "Estoque", "velocidade_venda": "Venda/dia",
-        "dias_cobertura": "Dias cobertura", "prazo_reposicao": "Prazo repos.",
-        "impacto_financeiro_estimado": "Impacto (R$)", "score_risco": "Score risco",
+        "estoque_atual": "Estoque atual", "velocidade_venda": "Venda/dia",
+        "dias_cobertura": "Dias cobertura", "prazo_reposicao": "Prazo repos. (dias)",
+        "status_cobertura": "Status",
+        "impacto_financeiro_estimado": "Impacto (R$)", "score_risco": "Score (0–100)",
     }
     available  = {k: v for k, v in show_cols.items() if k in produtos_view.columns}
     df_display = produtos_view[list(available.keys())].rename(columns=available)
 
-    # Light theme: backgrounds suaves
     RISCO_BG = {
         "Critico": "background-color:#FEE2E2; color:#991B1B",
         "Alto":    "background-color:#FEF3C7; color:#92400E",
@@ -599,6 +759,7 @@ elif pagina == "Radar de ruptura":
         cols   = list(df_display.columns)
         ri = cols.index("Risco") if "Risco" in cols else None
         di = cols.index("Dias cobertura") if "Dias cobertura" in cols else None
+        si = cols.index("Status") if "Status" in cols else None
         if ri is not None:
             bg = RISCO_BG.get(row.iloc[ri], "")
             if bg:
@@ -610,6 +771,8 @@ elif pagina == "Radar de ruptura":
                     styles[di] = "background-color:#FCA5A5; color:#7F1D1D; font-weight:bold"
                 elif v <= 7:
                     styles[di] = "background-color:#FCD34D; color:#78350F"
+        if si is not None and row.iloc[si] == "Ruptura ativa":
+            styles[si] = "background-color:#DC2626; color:#FFFFFF; font-weight:bold"
         return styles
 
     fmt = {}
@@ -623,50 +786,181 @@ elif pagina == "Radar de ruptura":
         use_container_width=True
     )
 
+    st.caption(
+        "Dias cobertura = Estoque atual ÷ Venda média por dia. "
+        "Quando Dias cobertura < Prazo de reposição, o produto entra em ruptura antes da reposição chegar."
+    )
+
 # =========================
 # MATRIZ DE RISCO
 # =========================
 elif pagina == "Matriz de risco":
     st.subheader("Matriz de Risco")
-    st.caption("Cada bolha representa um produto. Eixo X: cobertura restante. Eixo Y: impacto financeiro. Tamanho: pedidos afetados.")
 
+    # ── Como ler ──
+    st.markdown("""
+    <div style="background:#F8FAFC;border:1px solid #E9ECF0;border-radius:10px;
+                padding:1rem 1.4rem;margin-bottom:1.25rem;">
+        <p style="margin:0;font-weight:600;color:#111827;font-size:0.875rem;">Como ler esta matriz</p>
+        <p style="margin:6px 0 0;color:#6B7280;font-size:0.82rem;line-height:1.65;">
+            Cada bolha é um produto. Quanto mais à <strong>esquerda</strong>, menos dias de estoque restam
+            — mais urgente. Quanto mais <strong>acima</strong>, maior o impacto financeiro se faltar.
+            O <strong>tamanho</strong> da bolha representa quantos pedidos recorrentes de clientes serão afetados.
+            <br>Os produtos no quadrante <strong>superior esquerdo</strong> (poucos dias + alto impacto)
+            são a prioridade máxima de intervenção.
+        </p>
+    </div>
+    """, unsafe_allow_html=True)
+
+    # ── Quadrantes de ação ──
+    col_q1, col_q2, col_q3 = st.columns(3)
+    with col_q1:
+        st.markdown("""
+        <div style="background:#FEF2F2;border:1px solid #FECACA;border-radius:8px;padding:0.9rem 1rem;">
+            <p style="margin:0;font-weight:700;color:#DC2626;font-size:0.8rem;">
+                Zona crítica &lt; 3 dias
+            </p>
+            <p style="margin:5px 0 0;color:#991B1B;font-size:0.78rem;line-height:1.5;">
+                Acionar fornecedor emergencial ou ativar substituição automática imediatamente.
+            </p>
+        </div>
+        """, unsafe_allow_html=True)
+    with col_q2:
+        st.markdown("""
+        <div style="background:#FFFBEB;border:1px solid #FDE68A;border-radius:8px;padding:0.9rem 1rem;">
+            <p style="margin:0;font-weight:700;color:#D97706;font-size:0.8rem;">
+                Zona de alerta 3–7 dias
+            </p>
+            <p style="margin:5px 0 0;color:#92400E;font-size:0.78rem;line-height:1.5;">
+                Criar pedido de reposição com prioridade alta. Monitorar demanda diariamente.
+            </p>
+        </div>
+        """, unsafe_allow_html=True)
+    with col_q3:
+        st.markdown("""
+        <div style="background:#ECFDF5;border:1px solid #A7F3C4;border-radius:8px;padding:0.9rem 1rem;">
+            <p style="margin:0;font-weight:700;color:#059669;font-size:0.8rem;">
+                Zona segura &gt; 7 dias
+            </p>
+            <p style="margin:5px 0 0;color:#065F46;font-size:0.78rem;line-height:1.5;">
+                Cobertura adequada. Reposição no ciclo normal. Sem ação urgente.
+            </p>
+        </div>
+        """, unsafe_allow_html=True)
+
+    st.markdown("")
+
+    # ── Gráfico ──
     fig_matrix = px.scatter(
         produtos,
         x="dias_cobertura", y="impacto_financeiro_estimado",
         size="pedidos_recorrentes_afetados", color="risco_ruptura",
         hover_name="produto",
-        hover_data={"loja": True, "score_risco": True, "dias_cobertura": True, "pedidos_recorrentes_afetados": True},
+        hover_data={
+            "loja": True, "score_risco": True,
+            "dias_cobertura": ":.1f", "pedidos_recorrentes_afetados": True,
+            "impacto_financeiro_estimado": ":,.0f",
+        },
         color_discrete_map={
-            "Critico": "#DC2626",
-            "Alto":    "#D97706",
-            "Medio":   "#2563EB",
-            "Baixo":   "#00C25A",
+            "Critico": "#DC2626", "Alto": "#D97706",
+            "Medio": "#2563EB", "Baixo": "#00C25A",
         },
         labels={
-            "dias_cobertura": "Dias de cobertura",
+            "dias_cobertura": "Dias de cobertura restantes",
             "impacto_financeiro_estimado": "Impacto financeiro (R$)",
             "risco_ruptura": "Nível de risco",
+            "pedidos_recorrentes_afetados": "Pedidos afetados",
         },
-        size_max=50, height=480,
+        size_max=55, height=460,
     )
-    fig_matrix.add_vline(x=3, line_dash="dash", line_color="#DC2626",
-                         annotation_text="Zona crítica (< 3d)", annotation_position="top right")
-    fig_matrix.add_vline(x=7, line_dash="dash", line_color="#D97706",
-                         annotation_text="Alerta (< 7d)", annotation_position="top right")
+    fig_matrix.add_vline(
+        x=3, line_dash="dash", line_color="#DC2626", line_width=1.5,
+        annotation_text="Ruptura iminente", annotation_position="top right",
+        annotation_font_color="#DC2626", annotation_font_size=11,
+    )
+    fig_matrix.add_vline(
+        x=7, line_dash="dash", line_color="#D97706", line_width=1.5,
+        annotation_text="Zona de alerta", annotation_position="top right",
+        annotation_font_color="#D97706", annotation_font_size=11,
+    )
     fig_matrix.update_layout(
-        plot_bgcolor="rgba(0,0,0,0)",
-        paper_bgcolor="rgba(0,0,0,0)",
+        plot_bgcolor="rgba(0,0,0,0)", paper_bgcolor="rgba(0,0,0,0)",
         font_color="#374151",
+        legend=dict(
+            title="Nível de risco",
+            bgcolor="rgba(255,255,255,0.9)",
+            bordercolor="#E5E7EB",
+            borderwidth=1,
+        ),
+        margin=dict(t=20, b=20),
     )
     st.plotly_chart(fig_matrix, use_container_width=True)
+
+    # ── Tabela de prioridade ──
+    st.markdown("---")
+    st.subheader("Ranking de prioridade de intervenção")
+    st.caption("Ordenado por score de risco decrescente. Foque nos primeiros itens da lista.")
+    cols_rank = [c for c in ["produto", "loja", "risco_ruptura", "dias_cobertura",
+                               "prazo_reposicao", "impacto_financeiro_estimado",
+                               "pedidos_recorrentes_afetados", "score_risco"] if c in produtos.columns]
+    df_rank = (
+        produtos[cols_rank]
+        .sort_values("score_risco", ascending=False)
+        .rename(columns={
+            "produto": "Produto", "loja": "Loja", "risco_ruptura": "Risco",
+            "dias_cobertura": "Cobertura (d)", "prazo_reposicao": "Prazo repos.",
+            "impacto_financeiro_estimado": "Impacto (R$)",
+            "pedidos_recorrentes_afetados": "Pedidos afetados", "score_risco": "Score",
+        })
+    )
+    fmt_rank = {}
+    if "Cobertura (d)" in df_rank.columns: fmt_rank["Cobertura (d)"] = "{:.1f}"
+    if "Impacto (R$)" in df_rank.columns:  fmt_rank["Impacto (R$)"] = "{:,.0f}"
+    st.dataframe(df_rank.style.format(fmt_rank), use_container_width=True, hide_index=True)
 
 # =========================
 # SUBSTITUIÇÕES
 # =========================
 elif pagina == "Substituições":
     st.subheader("Substituição Inteligente")
-    st.caption("Score calculado com base em histórico de compras, sensibilidade à marca, faixa de preço e similaridade.")
 
+    # ── Contexto ──
+    st.markdown("""
+    <div style="background:#F8FAFC;border:1px solid #E9ECF0;border-radius:10px;
+                padding:1rem 1.4rem;margin-bottom:1.25rem;">
+        <p style="margin:0;font-weight:600;color:#111827;font-size:0.875rem;">
+            Por que isso importa
+        </p>
+        <p style="margin:6px 0 0;color:#6B7280;font-size:0.82rem;line-height:1.65;">
+            Quando um produto entra em ruptura, a operação precisa de um substituto.
+            Mas trocar um produto sem considerar o perfil do cliente gera <strong>rejeição na entrega</strong>
+            — o cliente recusa, o produto volta, e o custo operacional sobe.
+            O Pulse AI calcula um <strong>Score de Aceitação</strong> para cada substituição possível,
+            cruzando histórico de compras, sensibilidade à marca e variação de preço.
+            Substituições abaixo de 70% são <strong>bloqueadas automaticamente</strong> no picking.
+        </p>
+    </div>
+    """, unsafe_allow_html=True)
+
+    # ── Legenda do score ──
+    st.markdown("""
+    <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:1.25rem;">
+        <span style="background:#ECFDF5;color:#065F46;padding:4px 12px;border-radius:6px;
+                     font-size:0.75rem;font-weight:600;border:1px solid #6EE7B7;">
+            85–100% — Alta aceitação. Substituição aprovada automaticamente.
+        </span>
+        <span style="background:#FFFBEB;color:#92400E;padding:4px 12px;border-radius:6px;
+                     font-size:0.75rem;font-weight:600;border:1px solid #FDE68A;">
+            70–84% — Aceitação moderada. Aprovada com aviso ao cliente.
+        </span>
+        <span style="background:#FEF2F2;color:#991B1B;padding:4px 12px;border-radius:6px;
+                     font-size:0.75rem;font-weight:600;border:1px solid #FECACA;">
+            &lt;70% — Risco de rejeição. Bloqueada. Requer ação manual.
+        </span>
+    </div>
+    """, unsafe_allow_html=True)
+
+    # ── Cards de substituição ──
     for _, row in substituicoes.iterrows():
         score  = int(row.get("score_aceitacao", 80))
         delta  = row.get("delta_preco_pct", 0)
@@ -674,32 +968,73 @@ elif pagina == "Substituições":
 
         if score >= 85:
             score_label = "Alta aceitação"
-            score_color = "#00963F"
+            score_color = "#065F46"
+            score_bg    = "#ECFDF5"
+            score_border= "#6EE7B7"
+            decisao     = "Aprovada automaticamente"
+            decisao_cor = "#059669"
         elif score >= 70:
             score_label = "Aceitação moderada"
-            score_color = "#D97706"
+            score_color = "#92400E"
+            score_bg    = "#FFFBEB"
+            score_border= "#FDE68A"
+            decisao     = "Aprovada com aviso"
+            decisao_cor = "#D97706"
         else:
             score_label = "Risco de rejeição"
-            score_color = "#DC2626"
+            score_color = "#991B1B"
+            score_bg    = "#FEF2F2"
+            score_border= "#FECACA"
+            decisao     = "Bloqueada — ação manual"
+            decisao_cor = "#DC2626"
 
-        delta_str = "Mesmo preço" if delta == 0 else (f"+{delta}%" if delta > 0 else f"{delta}%")
+        delta_str  = "Mesmo preço" if delta == 0 else (f"+{delta}% mais caro" if delta > 0 else f"{abs(delta)}% mais barato")
+        delta_cor  = "#6B7280" if delta == 0 else ("#DC2626" if delta > 0 else "#059669")
+        sim_val    = row.get(sim_col, "—") if sim_col else "—"
+        disp_val   = row.get(disp_col, "—") if disp_col else "—"
 
         with st.container(border=True):
-            col1, col2, col3 = st.columns([5, 3, 2])
+            col1, col2, col3 = st.columns([4, 3, 2])
             with col1:
-                st.markdown(f"**{row[orig_col]}** → **{row[sub_col]}**")
-                st.caption(motivo)
-                if sim_col and sim_col in row.index:
-                    st.caption(f"Similaridade: {row[sim_col]}")
+                st.markdown(f"""
+                <p style="margin:0;font-weight:700;color:#111827;font-size:0.95rem;">
+                    {row[orig_col]}
+                </p>
+                <p style="margin:3px 0 6px;color:#9CA3AF;font-size:0.8rem;">→ substituto sugerido</p>
+                <p style="margin:0;font-weight:600;color:#00963F;font-size:0.9rem;">{row[sub_col]}</p>
+                <p style="margin:8px 0 0;color:#6B7280;font-size:0.8rem;line-height:1.5;">
+                    {motivo}
+                </p>
+                """, unsafe_allow_html=True)
+                if sim_col:
+                    st.caption(f"Similaridade de produto: {sim_val} · Disponibilidade: {disp_val}")
+
             with col2:
-                st.markdown(f"<span style='color:{score_color};font-weight:600;font-size:0.875rem;'>{score_label}</span>", unsafe_allow_html=True)
+                st.markdown(f"""
+                <div style="background:{score_bg};border:1px solid {score_border};
+                            border-radius:8px;padding:0.9rem 1rem;text-align:center;">
+                    <p style="margin:0;font-size:1.8rem;font-weight:800;color:{score_color};
+                               letter-spacing:-0.02em;">{score}%</p>
+                    <p style="margin:3px 0 0;font-size:0.75rem;font-weight:600;color:{score_color};">
+                        {score_label}
+                    </p>
+                </div>
+                """, unsafe_allow_html=True)
                 st.progress(score / 100)
-                st.caption(f"{score}% de chance de aceite")
+
             with col3:
-                st.markdown("**Variação de preço**")
-                st.markdown(f"**{delta_str}**")
-                if disp_col and disp_col in row.index:
-                    st.caption(f"Status: {row[disp_col]}")
+                st.markdown(f"""
+                <p style="margin:0;font-size:0.7rem;font-weight:600;color:#9CA3AF;
+                           text-transform:uppercase;letter-spacing:0.06em;">Decisão do agente</p>
+                <p style="margin:5px 0 8px;font-weight:700;color:{decisao_cor};font-size:0.85rem;">
+                    {decisao}
+                </p>
+                <p style="margin:0;font-size:0.7rem;font-weight:600;color:#9CA3AF;
+                           text-transform:uppercase;letter-spacing:0.06em;">Variação de preço</p>
+                <p style="margin:5px 0 0;font-weight:600;color:{delta_cor};font-size:0.85rem;">
+                    {delta_str}
+                </p>
+                """, unsafe_allow_html=True)
 
 # =========================
 # ALERTAS SLACK
