@@ -29,282 +29,368 @@ st.set_page_config(
 
 st.markdown("""
 <style>
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Inter:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800&display=swap');
 
     html, body, [class*="css"] {
         font-family: 'Inter', sans-serif !important;
     }
 
-    /* Page background */
-    .stApp {
-        background-color: #F5F7FA !important;
-    }
+    /* ── Page background ── */
+    .stApp { background-color: #F4F6F9 !important; }
     .main .block-container {
-        background-color: #F5F7FA;
-        padding-top: 1.5rem !important;
-        padding-bottom: 2rem !important;
+        background-color: #F4F6F9;
+        padding-top: 1.75rem !important;
+        padding-bottom: 3rem !important;
+        max-width: 1280px;
     }
 
-    /* Sidebar */
+    /* ── Accent bar topo ── */
+    .stApp::before {
+        content: '';
+        display: block;
+        position: fixed;
+        top: 0; left: 0; right: 0;
+        height: 3px;
+        background: linear-gradient(90deg, #00C25A 0%, #00E56A 60%, #A7F3C4 100%);
+        z-index: 9999;
+    }
+
+    /* ── Sidebar ── */
     [data-testid="stSidebar"] {
         background-color: #FFFFFF !important;
         border-right: 1px solid #E5E7EB !important;
     }
-    [data-testid="stSidebar"] * {
-        color: #374151 !important;
-    }
+    [data-testid="stSidebar"] * { color: #374151 !important; }
     [data-testid="stSidebar"] .stRadio label {
         font-size: 0.875rem !important;
-        padding: 6px 0 !important;
+        padding: 7px 0 !important;
         color: #374151 !important;
-    }
-    [data-testid="stSidebar"] .stRadio label:hover {
-        color: #00C25A !important;
+        transition: color 0.15s;
     }
 
-    /* Header */
+    /* ── Header ── */
     .pulse-header {
         background: #FFFFFF;
-        border-radius: 12px;
+        border-radius: 14px;
         padding: 1.5rem 2rem;
-        margin-bottom: 1.5rem;
-        border: 1px solid #E5E7EB;
+        margin-bottom: 1.75rem;
+        border: 1px solid #E9ECF0;
         display: flex;
         align-items: center;
         justify-content: space-between;
-        box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+        box-shadow: 0 2px 8px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
     }
     .pulse-header-logo {
         display: flex;
         align-items: center;
-        gap: 16px;
+        gap: 20px;
     }
     .pulse-header-logo img {
-        height: 32px;
+        height: 44px;
         object-fit: contain;
+        filter: drop-shadow(0 1px 2px rgba(0,0,0,0.08));
     }
     .pulse-header-divider {
         width: 1px;
-        height: 32px;
+        height: 40px;
         background: #E5E7EB;
+        flex-shrink: 0;
     }
     .pulse-header-left h1 {
         color: #111827 !important;
-        font-size: 1.25rem !important;
-        font-weight: 700 !important;
+        font-size: 1.3rem !important;
+        font-weight: 800 !important;
         margin: 0 !important;
-        letter-spacing: -0.02em;
+        letter-spacing: -0.03em;
+        line-height: 1.2;
     }
     .pulse-header-left p {
-        color: #6B7280 !important;
-        margin: 3px 0 0 !important;
-        font-size: 0.8rem !important;
+        color: #9CA3AF !important;
+        margin: 5px 0 0 !important;
+        font-size: 0.78rem !important;
+        font-weight: 400;
+        letter-spacing: 0.01em;
+    }
+    .pulse-header-right {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-end;
+        gap: 6px;
     }
     .pulse-badge {
         display: inline-flex;
         align-items: center;
-        gap: 6px;
-        background: #E6F9EE;
-        color: #00963F;
-        border: 1px solid #A7F3C4;
-        border-radius: 6px;
-        padding: 5px 12px;
-        font-size: 0.72rem;
-        font-weight: 600;
-        letter-spacing: 0.05em;
+        gap: 7px;
+        background: #ECFDF5;
+        color: #065F46;
+        border: 1px solid #6EE7B7;
+        border-radius: 20px;
+        padding: 5px 14px;
+        font-size: 0.7rem;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
     }
     .pulse-badge::before {
         content: '';
-        width: 6px;
-        height: 6px;
+        width: 7px;
+        height: 7px;
         border-radius: 50%;
         background: #00C25A;
         display: inline-block;
-        animation: pulse-dot 2s infinite;
+        box-shadow: 0 0 0 2px rgba(0,194,90,0.25);
+        animation: pulse-ring 2s ease infinite;
     }
-    @keyframes pulse-dot {
-        0%   { opacity: 1; }
-        50%  { opacity: 0.4; }
-        100% { opacity: 1; }
+    @keyframes pulse-ring {
+        0%   { box-shadow: 0 0 0 0 rgba(0,194,90,0.4); }
+        70%  { box-shadow: 0 0 0 6px rgba(0,194,90,0); }
+        100% { box-shadow: 0 0 0 0 rgba(0,194,90,0); }
+    }
+    .pulse-timestamp {
+        font-size: 0.7rem;
+        color: #9CA3AF;
+        font-weight: 400;
     }
 
-    /* KPI cards */
+    /* ── KPI cards ── */
     [data-testid="stMetric"] {
         background: #FFFFFF !important;
-        border-radius: 10px !important;
-        padding: 1.1rem 1.25rem !important;
-        border: 1px solid #E5E7EB !important;
-        box-shadow: 0 1px 3px rgba(0,0,0,0.05) !important;
+        border-radius: 12px !important;
+        padding: 1.25rem 1.4rem !important;
+        border: 1px solid #E9ECF0 !important;
+        box-shadow: 0 1px 4px rgba(0,0,0,0.05) !important;
+        transition: box-shadow 0.2s;
+    }
+    [data-testid="stMetric"]:hover {
+        box-shadow: 0 4px 12px rgba(0,194,90,0.1) !important;
     }
     [data-testid="stMetricLabel"] p {
-        font-size: 0.72rem !important;
-        color: #6B7280 !important;
-        font-weight: 500 !important;
+        font-size: 0.7rem !important;
+        color: #9CA3AF !important;
+        font-weight: 600 !important;
         text-transform: uppercase !important;
-        letter-spacing: 0.06em !important;
+        letter-spacing: 0.08em !important;
     }
     [data-testid="stMetricValue"] {
-        font-size: 1.6rem !important;
-        font-weight: 700 !important;
+        font-size: 1.7rem !important;
+        font-weight: 800 !important;
         color: #111827 !important;
+        letter-spacing: -0.02em !important;
     }
-    [data-testid="stMetricDelta"] {
-        font-size: 0.75rem !important;
-    }
+    [data-testid="stMetricDelta"] { font-size: 0.75rem !important; }
 
-    /* Section titles */
+    /* ── Section titles ── */
     h2, h3 {
         color: #111827 !important;
-        font-weight: 600 !important;
-        letter-spacing: -0.01em !important;
+        font-weight: 700 !important;
+        letter-spacing: -0.02em !important;
     }
+    h3 { font-size: 1.05rem !important; }
 
-    /* Divider */
-    hr { border-color: #E5E7EB !important; margin: 1.5rem 0 !important; }
+    /* ── Divider ── */
+    hr { border-color: #E9ECF0 !important; margin: 1.75rem 0 !important; }
 
-    /* Selectbox label */
+    /* ── Selectbox label ── */
     .stSelectbox label p {
-        font-size: 0.78rem !important;
-        color: #6B7280 !important;
-        font-weight: 500 !important;
+        font-size: 0.72rem !important;
+        color: #9CA3AF !important;
+        font-weight: 600 !important;
         text-transform: uppercase !important;
-        letter-spacing: 0.05em !important;
+        letter-spacing: 0.07em !important;
     }
 
-    /* Dataframe */
-    .stDataFrame { border-radius: 8px; overflow: hidden; border: 1px solid #E5E7EB; }
+    /* ── Dataframe ── */
+    .stDataFrame {
+        border-radius: 10px;
+        overflow: hidden;
+        border: 1px solid #E9ECF0;
+        box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+    }
 
-    /* Container border */
+    /* ── Container with border ── */
     [data-testid="stVerticalBlockBorderWrapper"] {
-        border-color: #E5E7EB !important;
-        border-radius: 10px !important;
+        border-color: #E9ECF0 !important;
+        border-radius: 12px !important;
         background: #FFFFFF !important;
-        box-shadow: 0 1px 3px rgba(0,0,0,0.04) !important;
+        box-shadow: 0 1px 4px rgba(0,0,0,0.05) !important;
     }
 
-    /* Agent steps */
+    /* ── Section card (wrapper) ── */
+    .section-card {
+        background: #FFFFFF;
+        border-radius: 12px;
+        padding: 1.5rem;
+        border: 1px solid #E9ECF0;
+        box-shadow: 0 1px 4px rgba(0,0,0,0.05);
+        margin-bottom: 1.25rem;
+    }
+    .section-label {
+        font-size: 0.68rem;
+        font-weight: 700;
+        color: #9CA3AF;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        margin-bottom: 1rem;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+    .section-label::before {
+        content: '';
+        width: 3px;
+        height: 12px;
+        background: #00C25A;
+        border-radius: 2px;
+        display: inline-block;
+    }
+
+    /* ── Agent steps ── */
     .agent-step {
         background: #FFFFFF;
-        border-radius: 8px;
-        padding: 1rem 1.25rem;
-        margin-bottom: 8px;
-        border: 1px solid #E5E7EB;
+        border-radius: 10px;
+        padding: 1.1rem 1.4rem;
+        margin-bottom: 10px;
+        border: 1px solid #E9ECF0;
         border-left: 3px solid #00C25A;
         display: flex;
         align-items: flex-start;
         gap: 1rem;
-        box-shadow: 0 1px 2px rgba(0,0,0,0.04);
+        box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+        transition: box-shadow 0.15s;
     }
+    .agent-step:hover { box-shadow: 0 3px 10px rgba(0,194,90,0.09); }
     .agent-step-num {
-        background: #00C25A;
+        background: linear-gradient(135deg, #00C25A, #009944);
         color: #FFFFFF;
         border-radius: 50%;
-        width: 26px;
-        height: 26px;
+        width: 28px;
+        height: 28px;
         display: flex;
         align-items: center;
         justify-content: center;
-        font-size: 0.8rem;
-        font-weight: 700;
+        font-size: 0.78rem;
+        font-weight: 800;
         flex-shrink: 0;
         margin-top: 1px;
+        box-shadow: 0 2px 6px rgba(0,194,90,0.3);
     }
     .agent-step-content h4 {
-        margin: 0 0 3px 0;
+        margin: 0 0 4px 0;
         color: #111827;
         font-size: 0.9rem;
-        font-weight: 600;
+        font-weight: 700;
     }
     .agent-step-content p {
         margin: 0;
         color: #6B7280;
         font-size: 0.825rem;
-        line-height: 1.55;
+        line-height: 1.6;
     }
 
-    /* Impact cards */
+    /* ── Impact cards ── */
     .impact-card {
-        background: #FFFFFF;
-        border-radius: 8px;
-        padding: 1.25rem;
+        background: linear-gradient(135deg, #FFFFFF 0%, #F0FDF8 100%);
+        border-radius: 12px;
+        padding: 1.5rem 1.25rem;
         text-align: center;
-        border: 1px solid #E5E7EB;
-        box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+        border: 1px solid #D1FAE5;
+        box-shadow: 0 1px 4px rgba(0,194,90,0.08);
+        transition: transform 0.15s, box-shadow 0.15s;
+    }
+    .impact-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 16px rgba(0,194,90,0.14);
     }
     .impact-card .value {
-        font-size: 1.75rem;
-        font-weight: 700;
-        color: #00C25A;
+        font-size: 2rem;
+        font-weight: 800;
+        color: #00963F;
         display: block;
-        letter-spacing: -0.02em;
+        letter-spacing: -0.03em;
+        line-height: 1.1;
     }
     .impact-card .label {
-        font-size: 0.775rem;
+        font-size: 0.75rem;
         color: #6B7280;
-        margin-top: 5px;
+        margin-top: 8px;
         display: block;
         font-weight: 500;
+        line-height: 1.4;
     }
 
-    /* Status cards */
+    /* ── Status cards ── */
     .status-card {
         background: #FFFFFF;
-        border-radius: 8px;
-        padding: 1rem 1.25rem;
-        border: 1px solid #E5E7EB;
-        box-shadow: 0 1px 2px rgba(0,0,0,0.04);
+        border-radius: 10px;
+        padding: 1.1rem 1.4rem;
+        border: 1px solid #E9ECF0;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.04);
     }
     .status-card .label {
         color: #9CA3AF;
-        font-size: 0.72rem;
-        font-weight: 500;
+        font-size: 0.68rem;
+        font-weight: 700;
         text-transform: uppercase;
-        letter-spacing: 0.06em;
+        letter-spacing: 0.08em;
         margin: 0;
     }
     .status-card .value {
         color: #111827;
-        font-size: 0.95rem;
-        font-weight: 600;
-        margin: 4px 0 0;
+        font-size: 1rem;
+        font-weight: 700;
+        margin: 5px 0 0;
     }
     .status-card.active {
-        background: #E6F9EE;
-        border-color: #A7F3C4;
+        background: linear-gradient(135deg, #ECFDF5, #F0FDF8);
+        border-color: #6EE7B7;
+        box-shadow: 0 2px 8px rgba(0,194,90,0.1);
     }
-    .status-card.active .label { color: #00963F; }
-    .status-card.active .value { color: #00963F; }
+    .status-card.active .label { color: #059669; }
+    .status-card.active .value { color: #065F46; }
 
-    /* Sidebar logo */
+    /* ── Sidebar logo ── */
     .sidebar-logo {
         display: flex;
         align-items: center;
-        gap: 10px;
-        margin-bottom: 4px;
+        padding: 4px 0 12px;
+        border-bottom: 1px solid #F3F4F6;
+        margin-bottom: 16px;
     }
     .sidebar-logo img {
-        height: 28px;
+        height: 36px;
         object-fit: contain;
     }
-    .sidebar-pulse-label {
-        font-size: 0.8rem;
-        color: #6B7280 !important;
-        margin: 0 0 12px 0;
-        padding-bottom: 12px;
-        border-bottom: 1px solid #E5E7EB;
-        display: block;
+    .sidebar-product-tag {
+        display: inline-block;
+        background: #ECFDF5;
+        color: #065F46;
+        font-size: 0.65rem;
+        font-weight: 700;
+        padding: 2px 8px;
+        border-radius: 4px;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        margin-bottom: 16px;
+        border: 1px solid #A7F3C4;
     }
 
-    /* Button */
+    /* ── Primary button ── */
     .stButton > button[kind="primary"] {
-        background: #00C25A !important;
+        background: linear-gradient(135deg, #00C25A, #009944) !important;
         border: none !important;
         color: #FFFFFF !important;
-        font-weight: 600 !important;
-        border-radius: 8px !important;
+        font-weight: 700 !important;
+        border-radius: 10px !important;
+        padding: 0.6rem 1.4rem !important;
+        font-size: 0.875rem !important;
+        letter-spacing: 0.01em !important;
+        box-shadow: 0 2px 8px rgba(0,194,90,0.3) !important;
+        transition: all 0.2s !important;
     }
     .stButton > button[kind="primary"]:hover {
-        background: #009944 !important;
+        background: linear-gradient(135deg, #00D964, #00C25A) !important;
+        box-shadow: 0 4px 14px rgba(0,194,90,0.45) !important;
+        transform: translateY(-1px) !important;
     }
 </style>
 """, unsafe_allow_html=True)
@@ -372,7 +458,7 @@ with st.sidebar:
     <div class="sidebar-logo">
         <img src="https://shopper.com.br/static/img/og-logo.png" alt="Shopper" />
     </div>
-    <span class="sidebar-pulse-label">Pulse AI · Prevenção de Ruptura</span>
+    <span class="sidebar-product-tag">Pulse AI</span>
     """, unsafe_allow_html=True)
 
     pagina = st.radio(
@@ -403,6 +489,7 @@ dias_medio     = round(produtos["dias_cobertura"].mean(), 1)
 pedidos_total  = len(recorrencia)
 alertas_ativos = len(alertas)
 
+agora_str = datetime.now().strftime("%d/%m/%Y · %H:%M")
 st.markdown(f"""
 <div class="pulse-header">
     <div class="pulse-header-logo">
@@ -413,7 +500,10 @@ st.markdown(f"""
             <p>Agente Inteligente de Prevenção de Ruptura</p>
         </div>
     </div>
-    <span class="pulse-badge">AGENTE ATIVO</span>
+    <div class="pulse-header-right">
+        <span class="pulse-badge">AGENTE ATIVO</span>
+        <span class="pulse-timestamp">Última atualização: {agora_str}</span>
+    </div>
 </div>
 """, unsafe_allow_html=True)
 
