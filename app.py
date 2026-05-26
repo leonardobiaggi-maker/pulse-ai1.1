@@ -436,7 +436,7 @@ elif "Alertas" in pagina:
 # =========================
 # COMO O AGENTE FUNCIONA
 # =========================
-elif "agente" in pagina or "Como" in pagina:
+elif "Como" in pagina:
     st.subheader("⚙️ Como o Pulse AI funciona como agente")
     st.markdown(
         "O Pulse AI não é um dashboard passivo — ele é um **agente autônomo** que monitora, "
@@ -500,7 +500,7 @@ elif "agente" in pagina or "Como" in pagina:
 # =========================
 # EXECUTAR AGENTE (SIMULADOR)
 # =========================
-elif "Executar" in pagina or "agente" in pagina.lower() and "🤖" in pagina:
+elif "Executar" in pagina or "🤖" in pagina:
 
     # Session state para histórico de execuções
     if "historico_ciclos" not in st.session_state:
