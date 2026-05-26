@@ -6,6 +6,43 @@ import time
 from datetime import datetime
 
 # =========================
+# SLACK
+# =========================
+SLACK_USER_IDS = ["U08US9NDVC7", "U07PQQC3R88"]  # Leonardo, Natalia
+
+def _get_slack_token():
+    try:
+        return st.secrets["SLACK_BOT_TOKEN"]
+    except Exception:
+        import os
+        return os.getenv("SLACK_BOT_TOKEN", "")
+
+def _abrir_dm(client, user_id):
+    try:
+        resp = client.conversations_open(users=user_id)
+        return resp["channel"]["id"]
+    except Exception:
+        return None
+
+def slack_broadcast(mensagem: str) -> bool:
+    """Envia mensagem para todos os usuários configurados. Retorna True se ao menos um enviou."""
+    token = _get_slack_token()
+    if not token:
+        return False
+    try:
+        from slack_sdk import WebClient
+        client = WebClient(token=token)
+        sucesso = False
+        for uid in SLACK_USER_IDS:
+            canal = _abrir_dm(client, uid)
+            if canal:
+                client.chat_postMessage(channel=canal, text=mensagem)
+                sucesso = True
+        return sucesso
+    except Exception:
+        return False
+
+# =========================
 # CONFIG PAGE
 # =========================
 st.set_page_config(
@@ -1267,8 +1304,53 @@ elif pagina == "Executar agente":
             alertas_gerados.append(row)
             time.sleep(0.3)
 
-        # ── PASSO 6: Conclusão ──
+        # ── PASSO 6: Disparar Slack real ──
         time.sleep(0.4)
+        add_log("INFO", "Disparando alertas reais no Slack...")
+
+        # Monta resumo do ciclo
+        impacto_ciclo = sum(r.get("impacto_financeiro_estimado", 0) for r in
+                            [produtos[produtos["produto"] == a["produto"]].iloc[0].to_dict()
+                             for a in (criticos + altos)
+                             if len(produtos[produtos["produto"] == a["produto"]]) > 0])
+
+        resumo_slack = (
+            f"📊 *PULSE AI — RESUMO DO CICLO*\n"
+            f"━━━━━━━━━━━━━━━━━━━━━━\n"
+            f"🕐 {agora.strftime('%d/%m/%Y %H:%M:%S')}\n\n"
+            f"*Situação geral:*\n"
+            f"  🔴 Críticos: {len(criticos)} produto(s)\n"
+            f"  🟠 Altos: {len(altos)} produto(s)\n"
+            f"  🚫 Substituições bloqueadas: {bloqueadas}\n\n"
+            f"*Produtos críticos:*\n" +
+            "\n".join(f"  • {r['produto']} ({r['loja']}) — score {r['score_risco']}"
+                      for r in [produtos.iloc[i].to_dict() for i in range(len(produtos))
+                                if produtos.iloc[i]["risco_ruptura"] == "Critico"][:3]) +
+            f"\n━━━━━━━━━━━━━━━━━━━━━━\n"
+            f"Próximo ciclo em 1h  |  Pulse AI · Shopper"
+        )
+
+        slack_ok = slack_broadcast(resumo_slack)
+
+        # Alertas individuais por produto crítico
+        for _, row in alertas.iterrows():
+            if row["risco_ruptura"] == "Critico":
+                msg = (
+                    f"🔴 *PULSE AI — ALERTA CRÍTICO*\n"
+                    f"━━━━━━━━━━━━━━━━━━━━━━\n"
+                    f"*Produto:* {row['produto']}\n"
+                    f"*Loja:* {row['loja']}  |  *Risco:* {row['risco_ruptura']}\n"
+                    f"*Impacto estimado:* R$ {int(row['impacto_financeiro_estimado']):,}  "
+                    f"|  *Pedidos afetados:* {row['pedidos_recorrentes_afetados']}\n"
+                    f"*Ação:* {row['acao_sugerida']}"
+                ).replace(",", ".")
+                slack_broadcast(msg)
+
+        if slack_ok:
+            add_log("SLACK", f"Alertas enviados para Leonardo e Natalia no Slack")
+        else:
+            add_log("WARN", "Slack não configurado — alertas não enviados")
+
         add_log("DONE", f"Ciclo concluido · {agora.strftime('%H:%M:%S')} · proximo ciclo em 60 min")
 
         # Salvar no histórico
@@ -1294,11 +1376,16 @@ elif pagina == "Executar agente":
         # ── Preview Slack ──
         with slack_area.container():
             st.markdown("---")
-            st.markdown("#### Alertas enviados ao Slack — `#pulse-alertas`")
+            if slack_ok:
+                st.success("Alertas enviados com sucesso no Slack para Leonardo e Natalia.")
+            else:
+                st.warning("Slack não configurado. Configure o SLACK_BOT_TOKEN nos Secrets do Streamlit.")
+            st.markdown("#### Alertas enviados — prévia")
             for _, row in alertas.iterrows():
                 with st.container(border=True):
                     st.code(row["mensagem_slack"], language="text")
-                    st.caption(f"Enviado às {agora.strftime('%H:%M:%S')} · canal #pulse-alertas")
+                    status = f"Enviado às {agora.strftime('%H:%M:%S')}" if slack_ok else "Não enviado — token ausente"
+                    st.caption(status)
 
     # Histórico de ciclos
     if st.session_state.historico_ciclos:
